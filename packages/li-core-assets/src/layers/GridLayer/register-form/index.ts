@@ -13,7 +13,8 @@ const toValues = (config: LayerRegisterFormResultType<GridLayerStyleAttributeVal
   const transform = transforms?.find((item: Record<string, any>) => item.type === 'grid') || {};
   const { field, method } = transform;
 
-  const coordinateType = sourceConfig.parser?.geometry ? 'geometry' : 'table';
+  const coordinateType = (visConfig as any)?.coordinateType
+    || (sourceConfig.parser?.geometry ? 'geometry' : 'table');
   const pointCoordinate = parser?.geometry
     ? { geometry: parser.geometry }
     : { longitude: parser?.x, latitude: parser?.y };
@@ -31,29 +32,24 @@ const toValues = (config: LayerRegisterFormResultType<GridLayerStyleAttributeVal
  * 表单数据格式转换，将表单的平铺数据结构转为结构化数据
  */
 const fromValues = (values: Record<string, any>): LayerRegisterFormResultType<GridLayerStyleAttributeValue> => {
-  const pointCoordinate = values.geometry ? { geometry: values.geometry } : { x: values.longitude, y: values.latitude };
+  const coordinateType = values.coordinateType || 'table';
+  const pointCoordinate = coordinateType === 'geometry'
+    ? { geometry: values.geometry }
+    : { x: values.longitude, y: values.latitude };
 
   const sourceConfig = {
-    parser: {
-      ...pointCoordinate,
-    },
-    transforms: [
-      {
-        type: 'grid',
-        // 网格半径 表单上为公里单位转化为米
-        size: Number(values.aggregateSize) * 1000,
-        field: values.aggregateField,
-        method: values.aggregateMethod,
-      },
-    ],
+    parser: { ...pointCoordinate },
+    transforms: [{
+      type: 'grid',
+      size: Number(values.aggregateSize) * 1000,
+      field: values.aggregateField,
+      method: values.aggregateMethod,
+    }],
   };
 
   const visConfig = gridLayerStyleFlatToConfig(values);
-
-  return {
-    sourceConfig,
-    visConfig,
-  };
+  (visConfig as any).coordinateType = coordinateType;
+  return { sourceConfig, visConfig };
 };
 
 export default (props: LayerRegisterFormProps): LayerRegisterForm<GridLayerStyleAttributeValue> => {

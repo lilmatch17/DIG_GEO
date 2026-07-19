@@ -1,8 +1,6 @@
 import type { DatasetFilter, DatasetServiceParams } from '@antv/li-sdk';
 import { applyDatasetFilter, isJSFunction, parseFunction, parserDataWithGeo } from '@antv/li-sdk';
 
-const Chache = new Map();
-
 type QueryDataParams = {
   url: string;
   requestOptions: Omit<RequestInit, 'body'> & {
@@ -46,7 +44,6 @@ const datasetFilterService = async (
  */
 export const getFetchData = (params: Params) => {
   const { properties, filter, signal } = params;
-  const requestkey = JSON.stringify(properties);
   const defaultRequestInit: RequestInit = {
     mode: 'cors',
     cache: 'default',
@@ -58,11 +55,6 @@ export const getFetchData = (params: Params) => {
         ? JSON.stringify(properties.requestOptions.body)
         : properties.requestOptions.body,
   });
-
-  if (Chache.has(requestkey)) {
-    const data = Chache.get(requestkey);
-    return datasetFilterService({ data, filter }, signal);
-  }
 
   const { onComplete, onError } = properties;
 
@@ -85,8 +77,6 @@ export const getFetchData = (params: Params) => {
     .then((_data) => {
       if (Array.isArray(_data) && _data.length === 0 ? true : typeof _data[0] === 'object') {
         const formatData = parserDataWithGeo(_data);
-
-        Chache.set(requestkey, formatData);
 
         return datasetFilterService({ data: formatData, filter }, signal);
       }

@@ -2,7 +2,7 @@ import { DeleteOutlined } from '@ant-design/icons';
 import { usePrefixCls } from '@formily/antd-v5/esm/__builtins__';
 import { Button, Popover, Select } from 'antd';
 import cls from 'classnames';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import IconPanel from '../IconPanel';
 import type { CustomMappingDataItem, IconItem, IconList } from '../type';
 import useStyle from './style';
@@ -30,6 +30,28 @@ const CustomItem = (props: CustomItemProps) => {
     onDelete,
   } = props;
   const [open, setOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+
+  // 初始化选中第一个分类
+  useEffect(() => {
+    if (iconList.length > 0 && !selectedCategory) {
+      setSelectedCategory(iconList[0].type);
+    }
+  }, [iconList, selectedCategory]);
+
+  // 根据选中分类过滤图标
+  const filteredIconList = useMemo(() => {
+    if (!selectedCategory) return iconList;
+    return iconList.filter((category) => category.type === selectedCategory);
+  }, [iconList, selectedCategory]);
+
+  // 分类选项
+  const categoryOptions = useMemo(() => {
+    return iconList.map((category) => ({
+      label: category.type,
+      value: category.type,
+    }));
+  }, [iconList]);
 
   const onIconChange = (icon: IconItem) => {
     const _itemValue = { ...defaultValue, ...icon };
@@ -42,6 +64,10 @@ const CustomItem = (props: CustomItemProps) => {
     onChange(_itemValue);
   };
 
+  const onCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+  };
+
   const content = () => {
     return (
       <div
@@ -51,7 +77,21 @@ const CustomItem = (props: CustomItemProps) => {
           e.stopPropagation();
         }}
       >
-        <IconPanel iconList={iconList} onChange={onIconChange} />
+        {/* 分类选择下拉框 */}
+        <div className={cls(`${prefixCls}__category-selector`, hashId)}>
+          <Select
+            placeholder="选择分类"
+            value={selectedCategory}
+            options={categoryOptions}
+            onChange={onCategoryChange}
+            style={{ width: '100%' }}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          />
+        </div>
+        <IconPanel iconList={filteredIconList} onChange={onIconChange} />
       </div>
     );
   };

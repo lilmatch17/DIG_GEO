@@ -104,6 +104,7 @@ export class EditorDataset {
   }
 
   public setSchema(schema: DatasetSchema) {
+    console.log('[EditorDataset.setSchema] schema:', JSON.stringify({ id: schema.id, type: schema.type, serviceType: (schema as any).serviceType, metadata: schema.metadata }));
     this.schema = this.savePropertiesFromSchema(schema);
     if (isLocalDatasetSchema(schema)) {
       this.data = schema.data;
@@ -188,10 +189,15 @@ export class EditorDataset {
    * 动态数据源类型，异步请求数据情况使用
    */
   private getQueryOptions(datasetSchema: RemoteDatasetSchema) {
-    const { serviceType: serviceName, filter, columns = [], properties } = datasetSchema;
+    const { serviceType: serviceName, filter, columns = [], properties, metadata } = datasetSchema;
+    console.log('[EditorDataset.getQueryOptions] serviceName:', serviceName, 'props:', JSON.stringify(properties));
     const datasetService = this.appService.getImplementDatasetService(serviceName);
+    console.log('[EditorDataset.getQueryOptions] datasetService found:', !!datasetService?.metadata?.name, 'name:', datasetService?.metadata?.name);
     const service = datasetService.service;
     const filterWithMeta = filter && getValidFilterWithMeta(filter, columns);
+
+    // 读取刷新周期（分钟），>0 则启用自动刷新
+    const refreshIntervalMin = (metadata as any)?.refreshInterval || 0;
 
     const options: QueryObserverOptions = {
       queryKey: [serviceName, filterWithMeta, properties],
@@ -199,7 +205,14 @@ export class EditorDataset {
         const serviceParams: DatasetServiceParams = { filter: filterWithMeta, properties, signal: context.signal };
         return service(serviceParams);
       },
+      // 数据刷新：staleTime 决定何时数据变"陈旧"
+      staleTime: refreshIntervalMin > 0 ? refreshIntervalMin * 60 * 1000 : Infinity,
     };
+
+    // 如果有配置刷新周期，使用 refetchInterval 自动轮询
+    if (refreshIntervalMin > 0) {
+      (options as any).refetchInterval = refreshIntervalMin * 60 * 1000;
+    }
 
     return options;
   }

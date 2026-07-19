@@ -4,7 +4,6 @@ import cls from 'classnames';
 import React, { useMemo, useState } from 'react';
 import IconPanel from '../IconPanel';
 import type { IconItem, IconList } from '../type';
-import { BuiltInImageList } from '../constant';
 import useStyle from './style';
 
 type UnknownIconProps = {
@@ -22,12 +21,22 @@ const UnknownIcon = (props: UnknownIconProps) => {
 
   const defaultUrl = useMemo(() => {
     if (defaultValue) {
-      return BuiltInImageList.find((item) => item.id === defaultValue)?.url;
+      // 如果值是 URL，直接使用
+      if (defaultValue.startsWith('/')) {
+        return defaultValue;
+      }
+      // 从 iconList 中查找
+      for (const cat of iconList) {
+        const found = cat.icons.find((item) => item.id === defaultValue || item.url === defaultValue);
+        if (found?.url) {
+          return found.url;
+        }
+      }
     }
-  }, [defaultValue]);
+  }, [defaultValue, iconList]);
 
   const onIconChange = (icon: IconItem) => {
-    onChange(icon.id);
+    onChange(icon.url);
     setOpen(false);
   };
 

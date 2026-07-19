@@ -3,8 +3,11 @@ import { AnalyticsScripts } from './analytics';
 import { getAssetDepExternal } from './external';
 import routes from './routes';
 
+// 离线部署模式：设置为true禁用外部CDN资源
+const OFFLINE_MODE = true;
+
 export default defineConfig({
-  title: 'L7VP',
+  title: '地理可视化',
   metas: [
     {
       name: 'keywords',
@@ -15,7 +18,8 @@ export default defineConfig({
       name: 'description',
       content: 'L7VP is an geospatial intelligent visualization analysis tools and development platform.',
     },
-    { 'http-equiv': 'Content-Security-Policy', content: 'upgrade-insecure-requests' },
+    // 离线模式移除CSP强制HTTPS升级
+    ...(OFFLINE_MODE ? [] : [{ 'http-equiv': 'Content-Security-Policy', content: 'upgrade-insecure-requests' }]),
   ],
   history: {
     type: 'hash',
@@ -26,7 +30,22 @@ export default defineConfig({
   mfsu: false,
   // jsMinifier 默认为 esbuild，esbuild minify 污染全局变量 L7 问题
   esbuildMinifyIIFE: true,
-  ...getAssetDepExternal(),
-  scripts: AnalyticsScripts,
-  favicons: ['https://mdn.alipayobjects.com/huamei_qa8qxu/afts/img/A*WCVLT5Dp5oYAAAAAAAAAAAAADmJ7AQ/original'],
+  // 代理配置：开发环境将 /api 和 /thumbnails 请求转发到后端
+  proxy: {
+    '/api': {
+      target: 'http://localhost:3001',
+      changeOrigin: true,
+      pathRewrite: { '^/api': '/api' },
+    },
+    '/thumbnails': {
+      target: 'http://localhost:3001',
+      changeOrigin: true,
+    },
+  },
+  // 离线模式禁用外部CDN资源，全部打包到本地
+  ...(OFFLINE_MODE ? {} : getAssetDepExternal()),
+  // 离线模式禁用统计脚本
+  scripts: OFFLINE_MODE ? [] : AnalyticsScripts,
+  // 离线模式使用本地favicon
+  favicons: OFFLINE_MODE ? ['/favicon.ico'] : ['https://mdn.alipayobjects.com/huamei_qa8qxu/afts/img/A*WCVLT5Dp5oYAAAAAAAAAAAAADmJ7AQ/original'],
 });

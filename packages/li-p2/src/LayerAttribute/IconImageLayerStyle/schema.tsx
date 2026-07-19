@@ -5,6 +5,7 @@ import type { AttributeSchemaOptions } from '../types';
 
 export default (options: AttributeSchemaOptions) => {
   const { fieldList = [] } = options;
+  // 基于字段：仅允许 string 类型字段（与原始 master 一致）
   const iconFieldList = fieldList.filter((item) => item.type === 'string');
 
   return {
@@ -26,25 +27,40 @@ export default (options: AttributeSchemaOptions) => {
               header: '图标类型',
             },
             properties: {
-              iconField: {
+              iconType: {
                 type: 'string',
-                title: '基于字段',
+                title: '图标模式',
+                default: 'fixed',
                 'x-decorator': 'FormItem',
-                'x-component': 'FieldSelect',
+                'x-component': 'Radio.Group',
+                enum: [
+                  { label: '固定图标', value: 'fixed' },
+                  { label: '基于字段', value: 'field' },
+                ],
+              },
+
+              // ===== 固定图标模式：移植原始 master 的图标映射逻辑 =====
+              // 顺序：图标形状 → 图标映射 → 基于字段（与 master 顺序调换）
+
+              iconImg: {
+                type: 'string',
+                title: '图标形状',
+                required: true,
+                'x-decorator': 'FormItem',
+                'x-component': 'IconSelector',
                 'x-decorator-props': {
-                  tooltip: '选中一个图标字段作为填充图标',
+                  tooltip: '选中一个图标作为填充图标',
                 },
                 'x-component-props': {
-                  placeholder: '请选择字段',
-                  allowClear: true,
+                  placeholder: '请选择图标',
                 },
-                enum: iconFieldList,
                 'x-reactions': [
                   {
-                    target: 'iconImgScale',
-                    effects: ['onFieldValueChange'],
+                    dependencies: ['iconType', 'iconField'],
                     fulfill: {
-                      run: "$form.setFieldState('iconImgScale',state=>{ state.value = undefined })",
+                      state: {
+                        visible: '{{ $deps[0] === "fixed" && $deps[1] === undefined }}',
+                      },
                     },
                   },
                 ],
@@ -64,51 +80,124 @@ export default (options: AttributeSchemaOptions) => {
                 },
                 'x-reactions': [
                   {
-                    dependencies: ['iconField'],
+                    dependencies: ['iconType', 'iconField'],
                     fulfill: {
                       state: {
-                        visible: '{{ $deps[0] !== undefined }}',
+                        visible: '{{ $deps[0] === "fixed" && $deps[1] !== undefined }}',
                       },
                     },
                   },
                 ],
               },
 
-              iconImg: {
+              iconField: {
                 type: 'string',
-                title: '图标形状',
+                title: '基于字段',
+                'x-decorator': 'FormItem',
+                'x-component': 'FieldSelect',
+                'x-decorator-props': {
+                  tooltip: '选中一个字段作为图标映射的依据',
+                },
+                'x-component-props': {
+                  placeholder: '请选择字段',
+                  allowClear: true,
+                },
+                enum: iconFieldList,
+                'x-reactions': [
+                  {
+                    target: 'iconImgScale',
+                    effects: ['onFieldValueChange'],
+                    fulfill: {
+                      run: "$form.setFieldState('iconImgScale',state=>{ state.value = undefined })",
+                    },
+                  },
+                  {
+                    dependencies: ['iconType'],
+                    fulfill: {
+                      state: {
+                        visible: '{{ $deps[0] === "fixed" }}',
+                      },
+                    },
+                  },
+                ],
+              },
+
+              // ===== 基于字段模式：库号+代号双字段匹配（不改动） =====
+              iconLibraryField: {
+                type: 'string',
+                title: '库号字段',
                 required: true,
+                'x-decorator': 'FormItem',
+                'x-component': 'FieldSelect',
+                'x-decorator-props': {
+                  tooltip: '数据中代表库号(library_code)的字段',
+                },
+                'x-component-props': {
+                  placeholder: '请选择库号字段',
+                  allowClear: true,
+                },
+                enum: fieldList,
+                'x-reactions': [
+                  {
+                    dependencies: ['iconType'],
+                    fulfill: {
+                      state: {
+                        visible: '{{ $deps[0] === "field" }}',
+                      },
+                    },
+                  },
+                ],
+              },
+
+              iconCodeField: {
+                type: 'string',
+                title: '代号字段',
+                required: true,
+                'x-decorator': 'FormItem',
+                'x-component': 'FieldSelect',
+                'x-decorator-props': {
+                  tooltip: '数据中代表代号(code_name)的字段',
+                },
+                'x-component-props': {
+                  placeholder: '请选择代号字段',
+                  allowClear: true,
+                },
+                enum: fieldList,
+                'x-reactions': [
+                  {
+                    dependencies: ['iconType'],
+                    fulfill: {
+                      state: {
+                        visible: '{{ $deps[0] === "field" }}',
+                      },
+                    },
+                  },
+                ],
+              },
+
+              // fallback 图标（基于字段模式中也可选）
+              iconImgFallback: {
+                type: 'string',
+                title: '默认图标',
                 'x-decorator': 'FormItem',
                 'x-component': 'IconSelector',
                 'x-decorator-props': {
-                  tooltip: '选中一个图标作为填充图标',
-                  allowClear: true,
+                  tooltip: '基于字段模式下，未匹配到图标时使用的默认图标。不选则跳过该数据点',
                 },
                 'x-component-props': {
-                  placeholder: '请选择图标',
+                  placeholder: '请选择默认图标（可选）',
                 },
                 'x-reactions': [
                   {
-                    dependencies: ['iconField'],
+                    dependencies: ['iconType'],
                     fulfill: {
                       state: {
-                        visible: '{{ $deps[0] === undefined }}',
+                        visible: '{{ $deps[0] === "field" }}',
                       },
                     },
                   },
                 ],
               },
-
-              // fillColor: {
-              //   type: 'string',
-              //   title: '图标颜色',
-              //   'x-decorator': 'FormItem',
-              //   'x-component': 'ColorPicker',
-              //   'x-component-props': {
-              //     placeholder: '颜色',
-              //   },
-              //   'x-decorator-props': {},
-              // },
 
               fillOpacity: {
                 type: 'number',

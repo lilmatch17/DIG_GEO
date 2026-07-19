@@ -37,6 +37,7 @@ class EditorWidgetManager {
   public getContainerWithinSideNavWidgets(slot?: EditorSideNavContainer['slot']) {
     const widgets: ImplementEditorWidget[] = [];
     this.widgets.forEach((widget) => {
+      if (!widget.container) return;
       if (widget.container.type === 'SideNav' && (isUndefined(slot) || widget.container.slot === slot)) {
         widgets.push(widget);
       }

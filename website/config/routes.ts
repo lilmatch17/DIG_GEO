@@ -1,5 +1,5 @@
 export default [
-  { path: '/*', redirect: '/' },
+  { path: '/*', redirect: '/project' },
   {
     name: 'workspace',
     path: '/',
@@ -8,7 +8,7 @@ export default [
       {
         name: '首页',
         path: '/',
-        component: './Home',
+        redirect: '/project',
         disabled: false,
         hideInMenu: true,
       },
@@ -17,12 +17,14 @@ export default [
         path: '/project',
         component: './Project',
         disabled: false,
+        hideInMenu: true,
       },
       {
         name: '案例市场',
         path: '/case',
         component: './Case',
         disabled: false,
+        hideInMenu: true,
       },
     ],
   },

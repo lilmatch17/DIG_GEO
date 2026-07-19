@@ -9,13 +9,9 @@ export type LIContextValue = {
   eventBus: EventEmitter;
 };
 
-export const LIContext = React.createContext<LIContextValue>(null as any);
+export const LIContext = React.createContext<LIContextValue | null>(null);
 
 export const useLIContext = () => {
   const context = React.useContext(LIContext);
-  if (context === undefined || Object.keys(context).length === 0) {
-    throw new Error(`useLIContext must be used within a LIContext.Provider`);
-  }
-
   return context;
 };

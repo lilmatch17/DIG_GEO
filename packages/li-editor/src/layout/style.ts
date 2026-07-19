@@ -14,8 +14,15 @@ const useStyle = () => {
 
   return {
     editorLayout: css`
-      position: relative;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
       display: flex;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
 
       /* 滚动条整体部分,必须要设置 */
       ::-webkit-scrollbar {
@@ -61,18 +68,22 @@ const useStyle = () => {
     left: css`
       position: relative;
       display: flex;
+      flex-shrink: 0;
       color: ${colorText};
       background-color: ${colorBgLayout};
     `,
 
     sideNav: css`
       z-index: 2;
+      flex-shrink: 0;
     `,
 
     sidePanel: css`
       z-index: 1;
       width: 350px;
+      flex-shrink: 0;
       transition: width 50ms ease 0s;
+      overflow-y: auto;
 
       &_hidden {
         width: 0;
@@ -83,10 +94,12 @@ const useStyle = () => {
     sidePanelHidden: css`
       width: 0;
       visibility: hidden;
+      overflow: hidden;
     `,
 
     cavans: css`
       flex: 1;
+      min-width: 0;
       overflow: hidden;
       text-align: center;
       transition: width 50ms ease 0s;

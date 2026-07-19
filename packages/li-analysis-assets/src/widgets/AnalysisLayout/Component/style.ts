@@ -43,12 +43,25 @@ const useStyle = () => {
       }
     `,
 
-    sidePanel: css`
+    sidePanel: (opacity: number) => css`
+      position: relative;
       width: 400px;
       padding: 15px 10px;
       overflow: hidden;
       overflow-y: auto;
-      background-color: ${colorBgLayout};
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: ${colorBgLayout};
+        opacity: ${opacity / 100};
+        z-index: -1;
+        pointer-events: none;
+      }
 
       > :nth-child(n + 2) {
         margin-top: 10px;

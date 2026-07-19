@@ -21,10 +21,17 @@ export function resolveChildrenMap(widgets: WidgetSchema[]) {
   const childrenMap: ChildrenMap = {};
   const topLevelWidgets: WidgetSchema[] = [];
 
+  // Debug: find container widgets
+  const containerWidgets = widgets.filter(w => w.type === 'AnalysisLayout' || w.type === 'BaseLayout');
+  console.log('[resolveChildrenMap] total widgets:', widgets.length, 'containers:', containerWidgets.map(c => ({ id: c.id, type: c.type })));
+
   for (const w of widgets) {
     const slotContainer = w.container;
     if (!slotContainer) {
       topLevelWidgets.push(w);
+      if (w.type !== 'AnalysisLayout' && w.type !== 'BaseLayout') {
+        console.log('[resolveChildrenMap] widget id=%s type=%s -> TOP LEVEL (no container)', w.id, w.type);
+      }
       continue;
     }
     const { id, slot } = slotContainer;
@@ -33,6 +40,10 @@ export function resolveChildrenMap(widgets: WidgetSchema[]) {
         _allChildren: [],
       };
     }
+    // Check if container actually exists
+    const containerExists = containerWidgets.some(c => c.id === id);
+    console.log('[resolveChildrenMap] widget id=%s type=%s -> container.id=%s slot=%s containerExists=%s',
+      w.id, w.type, id, slot, containerExists ? 'YES' : 'NO -> ORPHAN!');
     const children = childrenMap[id];
     if (!children[slot]) {
       children[slot] = [];

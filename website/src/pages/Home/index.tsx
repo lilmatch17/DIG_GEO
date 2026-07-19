@@ -1,9 +1,8 @@
-import { GithubOutlined } from '@ant-design/icons';
 import { css } from '@emotion/css';
 import type { RadioChangeEvent } from 'antd';
-import { Button, Popover, Radio, Space, theme, Tooltip } from 'antd';
+import { Button, Popover, Radio, Space, theme } from 'antd';
 import classNames from 'classnames';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { history, Link } from 'umi';
 import type { MenuItem } from './constant';
 import { FeatureList } from './constant';
@@ -13,27 +12,14 @@ const { useToken } = theme;
 
 const Home = () => {
   const [item, setItem] = useState<MenuItem>(FeatureList[0]);
-  const [watchersCount, setWatchersCount] = useState(null);
   const { token } = useToken();
-
-  useEffect(() => {
-    fetch(`https://api.github.com/repos/antvis/L7VP`, {
-      method: 'GET',
-    })
-      .then((response) => {
-        return response.json();
-      })
-      .then((res) => {
-        setWatchersCount(res.watchers_count);
-      });
-  }, []);
 
   return (
     <div className="li-home">
       <div className="li-home__content">
         <div className="li-home__header">
           <div className="li-home__header-left">
-            <p className={'li-home__header-left_title'}>L7VP 地理空间智能可视分析工具</p>
+            <p className={'li-home__header-left_title'}></p>
             <p className={'li-home__header-left_more'}>
               下一代地理空间智能可视分析工具和应用研发平台，具有丰富的可视化效果
               <br /> 提供洞察分析、地图应用搭建工具、开放扩展能力
@@ -55,22 +41,6 @@ const Home = () => {
                   体验 Demo
                 </Button>
               </Link>
-
-              <Tooltip
-                title={watchersCount}
-                color={token.colorBgElevated}
-                open={watchersCount ? true : false}
-                placement="right"
-                overlayClassName="li-home__header-left_btn-start__tooltip"
-              >
-                <a href="https://github.com/antvis/L7VP" target="_blank" rel="noreferrer">
-                  <Button
-                    className="li-home__header-left_btn-start"
-                    size="small"
-                    icon={<GithubOutlined style={{ fontSize: '16px' }} />}
-                  />
-                </a>
-              </Tooltip>
             </div>
           </div>
           <div className="li-home__header-right">
@@ -187,7 +157,7 @@ const Home = () => {
                   </Popover>
                   <Button
                     onClick={() => {
-                      window.open(history.createHref(`/docs?path=whvb0uddx03vqxka`));
+                      history.push(`/docs?path=whvb0uddx03vqxka`);
                     }}
                   >
                     演示视频
@@ -199,38 +169,6 @@ const Home = () => {
         </div>
       </div>
 
-      <div
-        className={classNames(
-          'li-home__footer',
-          css`
-            background-color: ${token.colorBgContainer};
-          `,
-        )}
-      >
-        <div className="li-home__footer-content">
-          <div
-            className={classNames(
-              'li-home__footer-content-left',
-              css`
-                a:hover {
-                  color: ${token.colorPrimaryHover};
-                }
-              `,
-            )}
-          >
-            <a href="https://antv.antgroup.com/zh" target="_blank" rel="noreferrer">
-              AntV 官网
-            </a>
-            <a href="https://github.com/antvis/L7VP" target="_blank" rel="noreferrer">
-              GitHub
-            </a>
-            <a href="https://www.yuque.com/antv/l7vp" target="_blank" rel="noreferrer">
-              关于我们
-            </a>
-          </div>
-          <div>© Copyright 2023 AntV L7VP</div>
-        </div>
-      </div>
     </div>
   );
 };

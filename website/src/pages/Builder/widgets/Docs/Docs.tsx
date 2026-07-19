@@ -16,7 +16,7 @@ const Docs: React.FC<DocsProps> = (props) => {
         shape="circle"
         icon={<ReadOutlined size={18} />}
         onClick={() => {
-          window.open(history.createHref(`/docs`));
+          history.push(`/docs`);
         }}
       />
     </Tooltip>

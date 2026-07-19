@@ -8,7 +8,7 @@ import type { FallbackProps } from 'react-error-boundary';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useEditorService, useEditorState } from '../../hooks';
 import { validateRuntimeDatasets, validRuntimeLayers, validRuntimeWidgets } from '../../utils';
-import { getApplicationSchemaFromEditorState, getApplicationSchemaFromRuntime } from '../../utils/application';
+import { getApplicationSchemaFromEditorState, getApplicationSchemaFromRuntime, stripDataRowsFromApplication } from '../../utils/application';
 
 function FallbackRender({ error, resetErrorBoundary }: FallbackProps) {
   // Call resetErrorBoundary() to reset the error boundary and retry the render.
@@ -53,11 +53,20 @@ const RuntimeApp: React.FC<RuntimeAppProps> = (props) => {
   const latestAppConfigRef = useLatest({
     ...sdkConfig,
     metadata: state.metadata,
+    // 直接使用 state.widgets 而不是 sdkConfig.spec.widgets，
+    // 因为 setSdkConfig 是异步的，debounced 回调可能在重渲染前执行
+    spec: {
+      ...sdkConfig.spec,
+      widgets: validRuntimeWidgets(state.widgets),
+    },
   });
 
   const publishSdkUpdateEvent = useMemoizedFn(
     debounce(() => {
-      editorService.publishEvent('change', getApplicationSchemaFromRuntime(latestAppConfigRef.current));
+      const currentConfig = latestAppConfigRef.current;
+      if (currentConfig) {
+        editorService.publishEvent('change', stripDataRowsFromApplication(getApplicationSchemaFromRuntime(currentConfig)));
+      }
     }, 300),
   );
 

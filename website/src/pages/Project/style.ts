@@ -8,17 +8,39 @@ const useStyle = () => {
   const { colorTextSecondary, colorPrimaryText, colorText, colorBgElevated } = token;
 
   return {
+    // project: css`
+    //   padding: 0 95px;
+    // `,
+
     project: css`
       padding: 0 95px;
+      /* 使用视口高度，并减去外层 main 标签的 padding (上下各 24px，共 48px) */
+      /* 如果你的页面有顶部导航栏 (通常是 64px)，请改为 calc(100vh - 64px - 48px) */
+      height: calc(100vh - 48px); 
+      overflow-y: auto;
+      overflow-x: hidden;
+      box-sizing: border-box; /* 确保 padding 不会额外增加高度 */
     `,
 
-    projectTabs: css`
-      .ant-tabs-tab-active .ant-tabs-tab-btn {
-        color: ${colorText} !important;
-      }
-      .ant-tabs-ink-bar {
-        background: ${colorText} !important;
-      }
+
+
+    // layoutContent: css`
+    //   height: 100%; /* 因为 #root 已经是 100% 了，这里继承高度 */
+    //   overflow-y: auto; /* 允许纵向滚动 */
+    //   overflow-x: hidden; /* 隐藏横向滚动 */
+    // `,
+
+    projectHeader: css`
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    `,
+
+    projectTitle: css`
+      font-size: 20px;
+      font-weight: 600;
+      color: ${colorPrimaryText};
     `,
 
     projectCard: css`

@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { history, Link, useParams } from 'umi';
 import { editorWidgets } from '../Builder/editor-widgets';
 import { useEditorNavbarKey } from '../Builder/hooks';
-import Logo from './components/Logo';
 import style from './Template.less';
 import { createProject, getCase } from '@/services';
 import { useEmptyModal, useMarketAssets } from '@/hooks';
@@ -40,10 +39,6 @@ const Template = () => {
       });
   }, [caseId]);
 
-  const onClickLogo = () => {
-    history.push('/case');
-  };
-
   const saveToProject = () => {
     const applicationConfig = liEditor.getApplicationConfig();
     const params = {
@@ -72,7 +67,6 @@ const Template = () => {
         <div>
           <div className={style.header} style={{ color: token.colorText, backgroundColor: token.colorBgElevated }}>
             <div className={style.left}>
-              <Logo onClick={onClickLogo} />
               <p className={style.title}>{appConfig.metadata.name}</p>
             </div>
             <div className={style.actions}>

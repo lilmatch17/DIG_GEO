@@ -24,8 +24,8 @@ export default implementLayer({
   version: 'v0.1',
   metadata: {
     name: 'FlowLayer',
-    displayName: '客流图层',
-    description: '用于客流数据分析展示',
+    displayName: '流向图层',
+    description: '用于流向数据分析展示',
     type: 'Layer',
     icon: ICON,
     color: 'purple',

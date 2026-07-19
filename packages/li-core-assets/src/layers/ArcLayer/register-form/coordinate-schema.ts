@@ -1,4 +1,5 @@
 import type { FieldSelectOptionType } from '@antv/li-p2';
+import { getDefaultLongitude, getDefaultLatitude } from '../../coordinate-match';
 
 export default (fieldList: FieldSelectOptionType[]) => {
   return {

@@ -94,13 +94,8 @@ export const parserExcelToSource = (content: ArrayBuffer, name: string, id?: str
     const workbook = XLSX_read(content, { type: 'array', cellDates: true });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
 
-    // 日期格式直接处理为字符串
-    Object.keys(sheet).forEach((key) => {
-      const item = sheet[key];
-      if (item.t === 'd') {
-        item.v = item.w;
-      }
-    });
+    // 日期单元格：保留 Date 对象，序列化时会转为 ISO 8601 字符串
+    // 前端 isDateField 已增强 ISO 8601 格式识别，无需替换为格式化文本
 
     // 默认只解析第一个工作簿
     data = XLSX_utils.sheet_to_json<Record<string, any>>(sheet);

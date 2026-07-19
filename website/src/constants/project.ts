@@ -57,20 +57,6 @@ export const DEFAULT_MAP_WIDGETS: WidgetSchema[] = [
     },
   },
   {
-    id: 'MapThemeControl',
-    type: 'MapThemeControl',
-    metadata: {
-      name: '底图主题切换',
-    },
-    properties: {
-      position: 'bottomright',
-    },
-    container: {
-      id: 'BaseLayout',
-      slot: 'controls',
-    },
-  },
-  {
     id: 'ea0b8946-3e3d-4a87-a4a0-5dd08e7a2eed',
     type: 'ExportImageControl',
     metadata: {
@@ -97,34 +83,6 @@ export const DEFAULT_ANALYSIS_WIDGETS: WidgetSchema[] = [
       showFloatPanel: false,
       showSidePanel: false,
       showBottomPanel: false,
-    },
-  },
-  {
-    id: 'AdministrativeSelectControl',
-    type: 'AdministrativeSelectControl',
-    metadata: {
-      name: '行政区域选择器',
-    },
-    properties: {
-      position: 'lefttop',
-    },
-    container: {
-      id: 'AnalysisLayout',
-      slot: 'controls',
-    },
-  },
-  {
-    id: 'LocationSearchControl',
-    type: 'LocationSearchControl',
-    metadata: {
-      name: '地名查询',
-    },
-    properties: {
-      position: 'lefttop',
-    },
-    container: {
-      id: 'AnalysisLayout',
-      slot: 'controls',
     },
   },
   {
@@ -194,20 +152,6 @@ export const DEFAULT_ANALYSIS_WIDGETS: WidgetSchema[] = [
     },
     properties: {
       position: 'topright',
-    },
-    container: {
-      id: 'AnalysisLayout',
-      slot: 'controls',
-    },
-  },
-  {
-    id: 'MapThemeControl',
-    type: 'MapThemeControl',
-    metadata: {
-      name: '底图主题切换',
-    },
-    properties: {
-      position: 'bottomright',
     },
     container: {
       id: 'AnalysisLayout',

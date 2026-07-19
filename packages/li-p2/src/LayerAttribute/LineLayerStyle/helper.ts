@@ -40,13 +40,12 @@ export const lineLayerStyleFlatToConfig = (style: Record<string, any>) => {
     minZoom: style.zoom?.[0],
     maxZoom: style.zoom?.[1],
     blend: style.blend,
-    // 动画效果隐藏
-    // animate: {
-    //   enable: style.animateEnable,
-    //   duration: style.animateDuration,
-    //   interval: style.animateInterval,
-    //   trailLength: style.animateTrailLength,
-    // },
+    animate: {
+      enable: style.animateEnable ?? false,
+      duration: style.animateDuration ?? 4,
+      interval: style.animateInterval ?? 0.8,
+      trailLength: style.animateTrailLength ?? 1,
+    },
   };
 
   return styleConfig;
@@ -96,11 +95,10 @@ export const lineLayerStyleConfigToFlat = (styleConfig: LineLayerStyleAttributeV
     targetColor: style?.targetColor,
     zoom: [minZoom, maxZoom],
     blend,
-    // 动画效果隐藏
-    // animateEnable: typeof animate === 'object' ? animate?.enable : animate,
-    // animateDuration: typeof animate === 'object' ? animate?.duration : undefined,
-    // animateInterval: typeof animate === 'object' ? animate?.interval : undefined,
-    // animateTrailLength: typeof animate === 'object' ? animate?.trailLength : undefined,
+    animateEnable: typeof animate === 'object' ? animate?.enable : false,
+    animateDuration: typeof animate === 'object' ? animate?.duration : 4,
+    animateInterval: typeof animate === 'object' ? animate?.interval : 0.8,
+    animateTrailLength: typeof animate === 'object' ? animate?.trailLength : 1,
   };
 
   return config;

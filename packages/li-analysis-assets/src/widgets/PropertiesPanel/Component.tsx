@@ -35,7 +35,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ items = [], isOpen })
       const datasetName = datasetList.find((item) => item.id === datasetId);
       setTitle(datasetName?.metadata.name || layerName);
       setCollapsed(300);
-      setFeature(event.feature);
+      setFeature(event.feature || {});
     };
     // 事件代理列表，为保证取消绑定事件是同一个函数引用地址
     const onLayerClickList: ((event: any) => void)[] = [];
@@ -65,6 +65,14 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ items = [], isOpen })
   }, [datasetList, formatLayerList]);
 
   const getContent = (val: any) => {
+    if (val === null || val === undefined) {
+      return (
+        <Paragraph ellipsis={{ rows: 3, expandable: true }}>
+          {''}
+        </Paragraph>
+      );
+    }
+
     if (isString(val) && isImageUrl(val)) {
       return (
         <div>
@@ -94,7 +102,10 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ items = [], isOpen })
           <div style={{ display: Boolean(collapsed) ? 'block' : 'none' }}>
             <div className={cls(`${CLS_PREFIX}__header`, styles.panelHeader)}>
               <div className={cls(`${CLS_PREFIX}__header__title`, styles.panelHeaderTitle)}>{title}</div>
-              <CloseOutlined onClick={() => setCollapsed(0)} />
+              <CloseOutlined
+                onClick={() => setCollapsed(0)}
+                style={{ cursor: 'pointer', fontSize: 16, color: '#999', padding: '4px 18px' }}
+              />
             </div>
             <Row style={{ padding: 14 }} className={cls(`${CLS_PREFIX}__content`, styles.panelContent)}>
               {Object.keys(feature).map((key) => {

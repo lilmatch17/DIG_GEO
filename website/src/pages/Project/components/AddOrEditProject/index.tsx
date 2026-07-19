@@ -31,7 +31,7 @@ export default function AddOrEditProject({ visible, onVisibleChange, project, on
   }, []);
 
   const onSubmitValue = async () => {
-    form.validateFields().then((value: Pick<ProjectType, 'projectName' | 'description' | 'assetPackageIds'>) => {
+    form.validateFields().then(async (value: Pick<ProjectType, 'projectName' | 'description' | 'assetPackageIds'>) => {
       if (type === 'edit') {
         if (project?.projectId) {
           updateProject(project?.projectId, { ...project, ...value }).then((_project) => {
@@ -41,7 +41,7 @@ export default function AddOrEditProject({ visible, onVisibleChange, project, on
           });
         }
       } else {
-        const applicationConfig = creatApplication(value.projectName, value.assetPackageIds!);
+        const applicationConfig = await creatApplication(value.projectName, value.assetPackageIds!);
         createProject({
           ...value,
           applicationConfig,

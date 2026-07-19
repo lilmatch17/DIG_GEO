@@ -9,7 +9,8 @@ import getSchema from './schema';
 const toValues = (config: LayerRegisterFormResultType<LineLayerStyleAttributeValue>) => {
   const { sourceConfig, visConfig } = config;
   const { parser } = sourceConfig;
-  const coordinateType = sourceConfig.parser?.geometry ? 'geometry' : 'table';
+  const coordinateType = (visConfig as any)?.coordinateType
+    || (sourceConfig.parser?.geometry ? 'geometry' : 'table');
   const coordinate = parser?.geometry
     ? { geometry: parser.geometry }
     : {
@@ -26,26 +27,16 @@ const toValues = (config: LayerRegisterFormResultType<LineLayerStyleAttributeVal
   };
 };
 
-/**
- * 表单数据格式转换，将表单的平铺数据结构转为结构化数据
- */
 const fromValues = (values: Record<string, any>): LayerRegisterFormResultType<LineLayerStyleAttributeValue> => {
-  const coordinate = values.geometry
+  const coordinateType = values.coordinateType || 'table';
+  const coordinate = coordinateType === 'geometry'
     ? { geometry: values.geometry }
     : { x: values.longitude, y: values.latitude, x1: values.targetLongitude, y1: values.targetLatitude };
 
-  const sourceConfig = {
-    parser: {
-      ...coordinate,
-    },
-  };
-
+  const sourceConfig = { parser: { ...coordinate } };
   const visConfig = lineLayerStyleFlatToConfig(values);
-
-  return {
-    sourceConfig,
-    visConfig,
-  };
+  (visConfig as any).coordinateType = coordinateType;
+  return { sourceConfig, visConfig };
 };
 
 export default (props: LayerRegisterFormProps): LayerRegisterForm<LineLayerStyleAttributeValue> => {

@@ -1,7 +1,11 @@
 import { useLIContext } from './useLIContext';
 
 export const useStateManager = () => {
-  const { stateManager } = useLIContext();
+  const context = useLIContext();
 
-  return stateManager;
+  if (!context) {
+    throw new Error(`useStateManager must be used within a LIContext.Provider`);
+  }
+
+  return context.stateManager;
 };

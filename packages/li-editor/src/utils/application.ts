@@ -71,6 +71,31 @@ export const getApplicationSchemaFromRuntime = (runtimeSchema: Application) => {
 };
 
 /**
+ * 生成用于保存的 Application Schema（排除数据行，仅保留元数据）
+ */
+export const getApplicationSchemaForSave = (state: EditorContextState) => {
+  const config = getApplicationSchemaFromEditorState(state);
+  return stripDataRowsFromApplication(config);
+};
+
+/**
+ * 从 Application JSON 中移除本地数据集的数据行
+ * 用于自动保存时减小请求体积
+ */
+export const stripDataRowsFromApplication = (application: Application): Application => {
+  if (!application.datasets) return application;
+  return {
+    ...application,
+    datasets: application.datasets.map((ds) => {
+      if (ds.type === 'local') {
+        return { ...ds, data: [] };
+      }
+      return ds;
+    }),
+  };
+};
+
+/**
  * 通过上下文状态生成 Application Schema
  */
 export const getApplicationSchemaFromEditorState = (state: EditorContextState) => {

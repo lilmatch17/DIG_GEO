@@ -1,8 +1,10 @@
 import type { Application } from '@antv/li-sdk';
 import dayjs from 'dayjs';
-import localforage from 'localforage';
 import { pick } from 'lodash-es';
-import { adaptationProjectMapToken, getUid } from '@/utils';
+import { adaptationProjectMapToken } from '@/utils';
+
+// 后端API地址
+const API_BASE_URL = '/api';
 
 export type Project = {
   projectName: string;
@@ -11,33 +13,32 @@ export type Project = {
   creatTime: string;
   applicationConfig: Application;
   assetPackageIds?: string[];
+  thumbnail?: string;
 };
 
 export type ProjectParams = Pick<Project, 'description' | 'projectName' | 'applicationConfig' | 'assetPackageIds'>;
-
-const PROJECTS_KEY = 'PROJECTS';
-
-/**
- * 更新列表
- */
-const updateProjectList = (projects: Project[]) => {
-  return localforage.setItem(PROJECTS_KEY, projects);
-};
 
 /**
  * 获取项目列表
  */
 export const getProjectList = async () => {
-  const projects = await localforage.getItem<Project[]>(PROJECTS_KEY);
-
-  return projects || [];
+  try {
+    const response = await fetch(`${API_BASE_URL}/projects`);
+    if (!response.ok) {
+      throw new Error('获取项目列表失败');
+    }
+    const projects = await response.json();
+    return projects || [];
+  } catch (error) {
+    console.error('获取项目列表失败:', error);
+    return [];
+  }
 };
 
 /**
  * 创建项目列表
  */
 export const createProject = async (params: ProjectParams) => {
-  const projectId = getUid();
   const creatTime = dayjs().format('YYYY-MM-DD HH:mm:ss');
 
   // 同步更新 AppConfig 元数据信息
@@ -47,80 +48,181 @@ export const createProject = async (params: ProjectParams) => {
     metadata: { name: params.projectName, creatTime, ...appMetadata },
   };
 
-  const project: Project = {
-    ...params,
-    projectId,
-    creatTime,
-    applicationConfig,
-  };
+  try {
+    const response = await fetch(`${API_BASE_URL}/projects`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        projectName: params.projectName,
+        description: params.description,
+        applicationConfig,
+        assetPackageIds: params.assetPackageIds,
+      }),
+    });
 
-  const projects = await getProjectList();
+    if (!response.ok) {
+      throw new Error('创建项目失败');
+    }
 
-  const newProjects = projects.concat(project);
+    const data = await response.json();
 
-  await updateProjectList(newProjects);
+    // Java 后端返回的是 assemble() 组装的应用 JSON { metadata:{projectId,...}, datasets, spec }
+    // Express 后端返回的是 Project 对象 { projectId, projectName, ..., applicationConfig }
+    if (data.metadata?.projectId) {
+      // Java 后端格式：整个 data 就是 applicationConfig，projectId 在 metadata 中
+      return {
+        ...params,
+        projectId: data.metadata.projectId,
+        creatTime: data.metadata.createTime || creatTime,
+        applicationConfig: data,
+        assetPackageIds: data.metadata.assetPackageIds || params.assetPackageIds,
+      } as Project;
+    }
 
-  return project;
+    // Express 后端格式：直接返回 Project 对象
+    return data;
+  } catch (error) {
+    console.error('创建项目失败:', error);
+    throw error;
+  }
 };
 
 /**
  * 通过 ID 获取项目
  */
 export const getProject = async (id: string) => {
-  const projects = await getProjectList();
-  const project = projects.find((item) => item.projectId === id);
+  try {
+    const response = await fetch(`${API_BASE_URL}/projects/${id}`);
+    if (!response.ok) {
+      if (response.status === 404) {
+        return Promise.reject('项目不存在');
+      }
+      throw new Error('获取项目失败');
+    }
 
-  if (project === undefined) {
+    const data = await response.json();
+
+    // Java 后端返回的是 assemble() 组装的应用 JSON { metadata:{projectId,...}, datasets, spec }
+    // Express 后端返回的是 Project 对象 { projectId, projectName, ..., applicationConfig }
+    let project: any;
+    if (data.metadata && !data.applicationConfig) {
+      // Java 后端格式：整个 data 就是 applicationConfig
+      project = {
+        projectId: data.metadata.projectId || id,
+        projectName: data.metadata.name,
+        description: data.metadata.description,
+        creatTime: data.metadata.createTime,
+        thumbnail: data.metadata.thumbnail,
+        assetPackageIds: data.metadata.assetPackageIds || [],
+        applicationConfig: data,
+      };
+    } else {
+      // Express 后端格式
+      project = data;
+    }
+
+    const _project = adaptationProjectMapToken(project);
+
+    return _project;
+  } catch (error) {
+    console.error('获取项目失败:', error);
     return Promise.reject('项目不存在');
   }
-
-  const _project = adaptationProjectMapToken(project);
-
-  return _project;
 };
 
 /**
  * 通过 ID 更新项目
  */
 export const updateProject = async (id: string, params: ProjectParams) => {
-  const projects = await getProjectList();
-  const index = projects.findIndex((project) => project.projectId === id);
+  try {
+    // 同步更新 AppConfig 元数据信息
+    const appMetadata = pick(params, ['description', 'assetPackageIds']);
+    const applicationConfig = {
+      ...params.applicationConfig,
+      metadata: { name: params.projectName, ...appMetadata },
+    };
 
-  if (index === -1) {
-    return Promise.reject('项目 ID 不存在');
+    const response = await fetch(`${API_BASE_URL}/projects/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        projectName: params.projectName,
+        description: params.description,
+        applicationConfig,
+        assetPackageIds: params.assetPackageIds,
+      }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return Promise.reject('项目 ID 不存在');
+      }
+      throw new Error('更新项目失败');
+    }
+
+    const updatedProject = await response.json();
+    return updatedProject;
+  } catch (error) {
+    console.error('更新项目失败:', error);
+    return Promise.reject('更新项目失败');
   }
-
-  const project = projects[index];
-
-  // 同步更新 AppConfig 元数据信息
-  const appMetadata = pick(params, ['description', 'assetPackageIds']);
-  const applicationConfig = {
-    ...params.applicationConfig,
-    metadata: { name: params.projectName, ...appMetadata },
-  };
-
-  const newProject: Project = { ...project, ...params, applicationConfig };
-  projects[index] = newProject;
-
-  await updateProjectList(projects);
-
-  return newProject;
 };
 
 /**
  * 通过 ID 删除项目
  */
 export const deleteProject = async (id: string) => {
-  const projects = await getProjectList();
-  const index = projects.findIndex((project) => project.projectId === id);
+  try {
+    const response = await fetch(`${API_BASE_URL}/projects/${id}`, {
+      method: 'DELETE',
+    });
 
-  if (index === -1) {
-    return Promise.reject('项目 ID 不存在');
+    if (!response.ok) {
+      if (response.status === 404) {
+        return Promise.reject('项目 ID 不存在');
+      }
+      throw new Error('删除项目失败');
+    }
+
+    // 后端 DELETE 返回 200/204 但 body 可能为空
+    const text = await response.text();
+    return text ? JSON.parse(text) : { success: true };
+  } catch (error) {
+    console.error('删除项目失败:', error);
+    return Promise.reject('删除项目失败');
   }
+};
 
-  const project = projects.splice(index, 1);
+/**
+ * 更新项目缩略图
+ */
+export const updateProjectThumbnail = async (id: string, thumbnailUrl: string) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/projects/${id}/thumbnail`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        thumbnailUrl,
+      }),
+    });
 
-  await updateProjectList(projects);
+    if (!response.ok) {
+      if (response.status === 404) {
+        return Promise.reject('项目 ID 不存在');
+      }
+      throw new Error('更新缩略图失败');
+    }
 
-  return project;
+    const updatedProject = await response.json();
+    return updatedProject;
+  } catch (error) {
+    console.error('更新缩略图失败:', error);
+    return Promise.reject('更新缩略图失败');
+  }
 };

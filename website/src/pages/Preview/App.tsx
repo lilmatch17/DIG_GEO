@@ -4,7 +4,6 @@ import { Button, Space, theme } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { history, useParams, useSearchParams } from 'umi';
 import style from './App.less';
-import Logo from './components/Logo';
 import { logYuyanMonitor } from '@/utils';
 import { createProject, getCase, getProject } from '@/services';
 import type { Case, Project } from '@/services';
@@ -59,10 +58,6 @@ const App = () => {
     }
   }, [appId]);
 
-  const onClickLogo = () => {
-    history.push(isCase ? '/case' : '/project');
-  };
-
   const saveToProject = () => {
     const params = {
       projectName: `${appConfig?.metadata.name}_copy`,
@@ -91,7 +86,6 @@ const App = () => {
   const Header = (
     <div className={style.header} style={{ color: token.colorText, backgroundColor: token.colorBgElevated }}>
       <div className={style.left}>
-        <Logo onClick={onClickLogo} />
         <p className={style.title}>{appConfig.metadata.name}</p>
       </div>
       {!isEmbed && isCase && (

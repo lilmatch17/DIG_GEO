@@ -53,7 +53,7 @@ const Case = () => {
     const onView = () => {
       const path =
         caseConfig.viewMode === 'view' ? `/app/${caseConfig.id}?type=case` : `/template/${caseConfig.id}?nav=layers`;
-      window.open(history.createHref(path));
+      history.push(path);
     };
 
     return (

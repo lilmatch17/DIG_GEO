@@ -8,7 +8,9 @@ import getSchema from './schema';
 const toValues = (config: LayerRegisterFormResultType<IconImageLayerStyleAttributeValue>) => {
   const { sourceConfig, visConfig } = config;
   const { parser } = sourceConfig;
-  const coordinateType = sourceConfig.parser?.geometry ? 'geometry' : 'table';
+  // coordinateType 优先从 visConfig 读取（支持 dms），兜底从 parser 推断
+  const coordinateType = (visConfig as any)?.coordinateType
+    || (sourceConfig.parser?.geometry ? 'geometry' : 'table');
   const pointCoordinate = parser?.geometry
     ? { geometry: parser.geometry }
     : { longitude: parser?.x, latitude: parser?.y };
@@ -22,13 +24,19 @@ const toValues = (config: LayerRegisterFormResultType<IconImageLayerStyleAttribu
  * 表单数据格式转换，将表单的平铺数据结构转为结构化数据
  */
 const fromValues = (values: Record<string, any>): LayerRegisterFormResultType<IconImageLayerStyleAttributeValue> => {
-  const pointCoordinate = values.geometry ? { geometry: values.geometry } : { x: values.longitude, y: values.latitude };
+  const coordinateType = values.coordinateType || 'table';
+  // dms 和 table 模式都使用 x/y parser（数据由 parserDataWithGeo 自动转换）
+  const pointCoordinate = coordinateType === 'geometry'
+    ? { geometry: values.geometry }
+    : { x: values.longitude, y: values.latitude };
   const sourceConfig = {
     parser: {
       ...pointCoordinate,
     },
   };
   const visConfig = iconImageLayerStyleFlatToConfig(values);
+  // 将 coordinateType 写入 visConfig 以便持久化
+  (visConfig as any).coordinateType = coordinateType;
   return {
     sourceConfig,
     visConfig,

@@ -1,7 +1,11 @@
 import { useLIContext } from './useLIContext';
 
 export const useEventBus = () => {
-  const { eventBus } = useLIContext();
+  const context = useLIContext();
 
-  return eventBus;
+  if (!context) {
+    throw new Error(`useEventBus must be used within a LIContext.Provider`);
+  }
+
+  return context.eventBus;
 };

@@ -35,10 +35,13 @@ const LILayerPopup: React.FC<LILayerPopupProps> = (props) => {
               <>
                 {newFields.map((_item: ILayerField, index) => {
                   const field = _item.formatField ? `${_item.formatField}:` : `${_item.field}:`;
+                  const rawValue = feature[_item.field];
                   const value =
-                    typeof feature[_item.field] === 'object'
-                      ? JSON.stringify(feature[_item.field])
-                      : feature[_item.field];
+                    rawValue === null || rawValue === undefined
+                      ? ''
+                      : typeof rawValue === 'object'
+                      ? JSON.stringify(rawValue)
+                      : rawValue;
 
                   if (isImageUrl(value)) {
                     return (

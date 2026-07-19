@@ -64,7 +64,7 @@ const AssetMarket = () => {
             size="small"
             icon={<QuestionCircleOutlined />}
             onClick={() => {
-              window.open(history.createHref(`/docs?path=zqvk302x61qq2kcq`));
+              history.push(`/docs?path=zqvk302x61qq2kcq`);
             }}
           >
             资产手册

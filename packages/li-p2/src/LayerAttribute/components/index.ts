@@ -7,6 +7,7 @@ export {
   Slider,
   SliderRange,
 } from '../../components/Formily';
+export { default as IconCategorySelect } from './IconCategorySelect';
 export { default as IconScaleSelector } from './IconScaleSelector';
 export { default as IconSelector } from './IconSelector';
 export { default as ResterScaleSelector } from './ResterScaleSelector';

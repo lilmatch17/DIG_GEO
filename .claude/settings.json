@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(f:/programfiles/anaconda/envs/kag_demo/python.exe -c ' *)",
+      "Bash(curl -s http://1.94.200.29:3001/api/health)",
+      "Bash(curl -s -o NUL -w \"Frontend: %{http_code}\" http://1.94.200.29:8000/)",
+      "Bash(docker --version)",
+      "Bash(wmic OS get FreePhysicalMemory)"
+    ]
+  }
+}

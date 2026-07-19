@@ -13,10 +13,10 @@ const New = () => {
     });
   };
 
-  const addProject = () => {
+  const addProject = async () => {
     const creatTime = dayjs().format('YYYY-MM-DD HH:mm:ss');
     const defaultName = `未命名_${creatTime}`;
-    const applicationConfig = creatApplication(defaultName, DefaultAssetPackageIds);
+    const applicationConfig = await creatApplication(defaultName, DefaultAssetPackageIds);
     createProject({
       projectName: defaultName,
       description: '无描述信息',

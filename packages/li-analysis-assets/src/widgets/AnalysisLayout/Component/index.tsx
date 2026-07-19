@@ -14,7 +14,7 @@ export interface AnalysisLayoutProps
 }
 
 const AnalysisLayout: React.FC<AnalysisLayoutProps> = (props) => {
-  const { showSidePanel, showBottomPanel, showFloatPanel, collapsedFloatPanel = true, slotsElements, children } = props;
+  const { showSidePanel, showBottomPanel, showFloatPanel, collapsedFloatPanel = true, sidePanelOpacity = 100, slotsElements, children } = props;
 
   const styles = useStyle();
 
@@ -53,7 +53,7 @@ const AnalysisLayout: React.FC<AnalysisLayoutProps> = (props) => {
           {children}
         </MapContainer>
         {showSidePanel && (
-          <div className={classNames(styles.sidePanel, `${CLS_PREFIX}__side-panel`)}>
+          <div className={classNames(styles.sidePanel(sidePanelOpacity), `${CLS_PREFIX}__side-panel`)}>
             {slotsElements.sidePanel ? slotsElements.sidePanel({}) : null}
           </div>
         )}

@@ -119,6 +119,77 @@ export const isPonitCoordinates = (data: any): any => {
 };
 
 /**
+ * 是否是度分秒字符串 (DDD.MMSSss格式)
+ * 整数部分=度，小数第1-2位=分，第3位及以后=秒(含小数)
+ * @data string "120.105999" (120°10'59.99")
+ * @return boolean
+ */
+export const isDmsString = (data: any) => {
+  if (data == null || data === '') return false;
+  // 支持 number 类型（数据库 DECIMAL 字段）和 string 类型
+  const str = typeof data === 'number' ? String(data) : typeof data === 'string' ? data : '';
+  if (!str) return false;
+  // 匹配 DDD.MMSSsss 格式: 1-3位整数(可负) + 小数点 + 4-8位小数
+  const dmsRegExp = /^-?\d{1,3}\.\d{4,8}$/;
+  if (!dmsRegExp.test(str)) return false;
+
+  // 校验分/秒值必须在合法范围内，排除普通十进制数被误判
+  try {
+    const negative = str.startsWith('-');
+    const s = negative ? str.substring(1) : str;
+    const fracStr = (s.split('.')[1] || '').padEnd(6, '0');
+    const minutes = parseInt(fracStr.substring(0, 2), 10);
+    // 秒编码：前2位=整数秒，后续=小数秒
+    const secStr = fracStr.substring(2);
+    const secInt = parseInt(secStr.substring(0, 2), 10) || 0;
+    const secFrac = parseFloat('0.' + (secStr.substring(2) || '0'));
+    const seconds = secInt + secFrac;
+    return minutes < 60 && seconds < 60;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * 度分秒字符串 → 十进制
+ * @param dms "120.105999" (120°10'59.99")
+ * @returns 120.183331 (十进制)
+ */
+export const dmsToDecimal = (dms: any): number => {
+  try {
+    // 支持 number 类型（数据库 DECIMAL 字段）
+    const dmsStr = typeof dms === 'number' ? String(dms) : dms;
+    if (typeof dmsStr !== 'string') return Number(dmsStr);
+
+    const negative = dmsStr.startsWith('-');
+    const str = negative ? dmsStr.substring(1) : dmsStr;
+    const parts = str.split('.');
+    const degrees = parseInt(parts[0], 10);
+
+    let minutes = 0;
+    let seconds = 0;
+    if (parts[1]) {
+      const fracStr = parts[1].padEnd(6, '0');
+      minutes = parseInt(fracStr.substring(0, 2), 10);
+      // 秒编码：前2位=整数秒，后续=小数秒（如"5999"→59秒+0.99秒=59.99）
+      const secStr = fracStr.substring(2);
+      const secInt = parseInt(secStr.substring(0, 2), 10) || 0;
+      const secFrac = parseFloat('0.' + (secStr.substring(2) || '0'));
+      seconds = secInt + secFrac;
+    }
+
+    if (minutes >= 60 || seconds >= 60) {
+      return Number(dmsStr);
+    }
+
+    const decimal = degrees + minutes / 60 + seconds / 3600;
+    return negative ? -decimal : decimal;
+  } catch {
+    return Number(dms);
+  }
+};
+
+/**
  * 解析带有地理类型的行数据
  */
 export const parserDataWithGeo = (data: Record<string, any>[]): Record<string, any>[] => {
@@ -131,15 +202,21 @@ export const parserDataWithGeo = (data: Record<string, any>[]): Record<string, a
     const value = fristRow[key];
     // 如果是点坐标(数组或字符串)列
     if (isPonitCoordinates(value)) {
+      console.log('[geo-parser] 检测到点坐标列:', key, value);
       convertColumnsMap.set(key, ponitCoordinates2Geometry);
       // 如果是 wkt 列
     } else if (isWkt(value)) {
+      console.log('[geo-parser] 检测到 WKT 列:', key, value);
       convertColumnsMap.set(key, wkt2Geometry);
       // 如果是字符串 geometry 列
     } else if (isGeometryString(value)) {
+      console.log('[geo-parser] 检测到 Geometry 列:', key, value);
       convertColumnsMap.set(key, geometryString2Geometry);
+      // 如果是度分秒字符串
     }
+    // 注意：DMS 不在 parserDataWithGeo 自动检测，由图层级别根据 coordinateType 显式转换
   }
+  console.log('[geo-parser] 转换映射:', Array.from(convertColumnsMap.keys()));
 
   for (let index = 0; index < data.length; index++) {
     const row = data[index];

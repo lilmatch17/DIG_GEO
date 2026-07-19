@@ -29,3 +29,9 @@ lerna-debug.log
 /.history
 
 /packages/*/dist
+
+master/
+java-server/target/
+deploy/
+node_modules/
+

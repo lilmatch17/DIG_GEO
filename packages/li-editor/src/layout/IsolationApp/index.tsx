@@ -5,6 +5,7 @@ import { forOwn, isObject } from 'lodash-es';
 import type { CSSProperties } from 'react';
 import React, { useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 
 type SandBox = {
   /** 沙箱注入环境变量 */
@@ -48,7 +49,7 @@ const renderPortalRuntimeApp = (
     container.id = containerId;
   }
 
-  ReactDOM.render(<LIAppElement />, container);
+  createRoot(container).render(<LIAppElement />);
 };
 
 const getRenderAppResource = () => {
@@ -72,7 +73,7 @@ const getRenderAppResource = () => {
 
       const App = React.createElement(LIAppElement, null);
 
-      ReactDOM.render(App, document.getElementById("app"));
+      createRoot(document.getElementById("app")).render(App);
     `;
 
   return content;
@@ -133,6 +134,7 @@ const IsolationRuntime: React.FC<IsolationRuntimeProps> = (props) => {
     // inject must deps env
     (contentWindow as any).React = React;
     (contentWindow as any).ReactDOM = ReactDOM;
+    (contentWindow as any).createRoot = createRoot;
     (contentWindow as any).LIRuntime = { App, configState: appConfigState };
 
     mountResourceToFrame(iframe, sandbox).then(() => {

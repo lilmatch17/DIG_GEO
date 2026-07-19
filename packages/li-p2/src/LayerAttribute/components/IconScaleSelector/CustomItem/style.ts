@@ -8,6 +8,7 @@ export default genStyleHook('icon-scale-selector-icon-item', (token) => {
     borderRadius,
     colorTextDescription,
     zIndexPopupBase,
+    padding,
   } = token;
 
   return {
@@ -44,9 +45,15 @@ export default genStyleHook('icon-scale-selector-icon-item', (token) => {
       },
 
       '&__icon-popover': {
-        width: '250px',
-        maxHeight: '350px',
+        width: '280px',
+        maxHeight: '400px',
         overflowY: 'auto',
+      },
+
+      '&__category-selector': {
+        padding: `${padding}px`,
+        borderBottom: '1px solid #f0f0f0',
+        marginBottom: `${padding}px`,
       },
 
       '&__value': {

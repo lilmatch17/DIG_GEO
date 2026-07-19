@@ -9,7 +9,8 @@ import getSchema from './schema';
 const toValues = (config: LayerRegisterFormResultType<BubbleLayerStyleAttributeValue>) => {
   const { sourceConfig, visConfig } = config;
   const { parser } = sourceConfig;
-  const coordinateType = sourceConfig.parser?.geometry ? 'geometry' : 'table';
+  const coordinateType = (visConfig as any)?.coordinateType
+    || (sourceConfig.parser?.geometry ? 'geometry' : 'table');
   const pointCoordinate = parser?.geometry
     ? { geometry: parser.geometry }
     : { longitude: parser?.x, latitude: parser?.y };
@@ -25,13 +26,17 @@ const toValues = (config: LayerRegisterFormResultType<BubbleLayerStyleAttributeV
  * 表单数据格式转换，将表单的平铺数据结构转为结构化数据
  */
 const fromValues = (values: Record<string, any>): LayerRegisterFormResultType<BubbleLayerStyleAttributeValue> => {
-  const pointCoordinate = values.geometry ? { geometry: values.geometry } : { x: values.longitude, y: values.latitude };
+  const coordinateType = values.coordinateType || 'table';
+  const pointCoordinate = coordinateType === 'geometry'
+    ? { geometry: values.geometry }
+    : { x: values.longitude, y: values.latitude };
   const sourceConfig = {
     parser: {
       ...pointCoordinate,
     },
   };
   const visConfig = bubbleLayerStyleFlatToConfig(values);
+  (visConfig as any).coordinateType = coordinateType;
 
   return {
     sourceConfig,

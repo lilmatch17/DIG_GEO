@@ -32,6 +32,7 @@ export function resolveContainerSlotMap(widgets: ImplementEditorWidget[]) {
   const containerSlotMap: ContainerSlotMap = {};
   for (const w of widgets) {
     const slotContainer = w.container;
+    if (!slotContainer) continue;
     const { type, slot } = slotContainer;
 
     if (!containerSlotMap[type]) {

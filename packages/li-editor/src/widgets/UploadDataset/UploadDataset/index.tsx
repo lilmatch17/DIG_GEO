@@ -29,6 +29,41 @@ export default function UploadDataset(props: UploadDatasetProps) {
       .then((dataSource) => {
         if (dataSource) {
           setUploadData((pre) => [...pre, dataSource]);
+          // 将 Excel/CSV 的行数据通过 upload 端点直接写入 DATASET_ROWS
+          const projectId = (window as any).__L7VP_PROJECT_ID__;
+          const rawData = (dataSource as any).data;
+          console.log('[UploadDataset] projectId=' + projectId + ' type=' + dataSource.type + ' dataLen=' + (rawData?.length || 0) + ' id=' + dataSource.id);
+          if (projectId && dataSource.type === 'local' && rawData?.length > 0) {
+            const columns = dataSource.columns || [];
+            // 直接传对象数组，后端存储为 JSON（保持与 DatasetPreview 表格的 dataIndex 兼容）
+            const rows = rawData;
+            const payload = {
+              id: dataSource.id,
+              datasetName: dataSource.metadata?.name || (dataSource as any).name || '',
+              type: dataSource.type,
+              columns,
+              rows,
+            };
+            // 使用当前页面同源地址，开发环境走 Umi proxy，生产环境走 Nginx 代理
+            const url = '/api/projects/' + projectId + '/datasets/upload';
+            console.log('[UploadDataset] POST ' + url + ' payloadSize=' + JSON.stringify(payload).length);
+            fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            }).then(async (res) => {
+              if (!res.ok) {
+                const errText = await res.text().catch(() => '');
+                console.error('[UploadDataset] 行数据上传失败 HTTP ' + res.status, errText);
+                messageApi.error('数据集行数据保存失败，请刷新后重试');
+              } else {
+                console.log('[UploadDataset] 行数据已上传, datasetId=' + dataSource.id + ', rows=' + rows.length);
+              }
+            }).catch((e) => {
+              console.error('[UploadDataset] 行数据上传异常', e);
+              messageApi.error('数据集上传网络错误');
+            });
+          }
         }
         // @ts-ignore
         onSuccess();

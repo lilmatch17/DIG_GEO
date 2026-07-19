@@ -1,4 +1,5 @@
 import type { FieldSelectOptionType } from '@antv/li-p2';
+import { getDefaultLongitude, getDefaultLatitude } from '../../coordinate-match';
 
 export default (fieldList: FieldSelectOptionType[]) => {
   return {
@@ -25,7 +26,8 @@ export default (fieldList: FieldSelectOptionType[]) => {
               'x-decorator': 'FormItem',
               'x-component': 'Radio.Group',
               enum: [
-                { label: '经纬度', value: 'table' },
+                { label: '点度', value: 'table' },
+                { label: '度分秒', value: 'dms' },
                 { label: 'Geometry', value: 'geometry' },
               ],
             },
@@ -33,45 +35,23 @@ export default (fieldList: FieldSelectOptionType[]) => {
               type: 'string',
               title: '经度',
               required: true,
+              default: getDefaultLongitude(fieldList),
               'x-decorator': 'FormItem',
               'x-component': 'FieldSelect',
-              'x-component-props': {
-                allowClear: true,
-                placeholder: '请选择字段',
-              },
+              'x-component-props': { allowClear: true, placeholder: '请选择字段' },
               enum: [...fieldList],
-              'x-reactions': [
-                {
-                  dependencies: ['coordinateType'],
-                  fulfill: {
-                    state: {
-                      visible: '{{ $deps[0] === "table" }}',
-                    },
-                  },
-                },
-              ],
+              'x-reactions': [{ dependencies: ['coordinateType'], fulfill: { state: { visible: '{{ $deps[0] === "table" || $deps[0] === "dms" }}', title: '{{ $deps[0] === "dms" ? "经度(度分秒)" : "经度" }}' } } }],
             },
             latitude: {
               type: 'string',
               title: '纬度',
               required: true,
+              default: getDefaultLatitude(fieldList),
               'x-decorator': 'FormItem',
               'x-component': 'FieldSelect',
-              'x-component-props': {
-                allowClear: true,
-                placeholder: '请选择字段',
-              },
+              'x-component-props': { allowClear: true, placeholder: '请选择字段' },
               enum: [...fieldList],
-              'x-reactions': [
-                {
-                  dependencies: ['coordinateType'],
-                  fulfill: {
-                    state: {
-                      visible: '{{ $deps[0] === "table" }}',
-                    },
-                  },
-                },
-              ],
+              'x-reactions': [{ dependencies: ['coordinateType'], fulfill: { state: { visible: '{{ $deps[0] === "table" || $deps[0] === "dms" }}', title: '{{ $deps[0] === "dms" ? "纬度(度分秒)" : "纬度" }}' } } }],
             },
             geometry: {
               type: 'string',
@@ -79,21 +59,9 @@ export default (fieldList: FieldSelectOptionType[]) => {
               required: true,
               'x-decorator': 'FormItem',
               'x-component': 'FieldSelect',
-              'x-component-props': {
-                allowClear: true,
-                placeholder: '请选择字段',
-              },
+              'x-component-props': { allowClear: true, placeholder: '请选择字段' },
               enum: [...fieldList],
-              'x-reactions': [
-                {
-                  dependencies: ['coordinateType'],
-                  fulfill: {
-                    state: {
-                      visible: '{{ $deps[0] === "geometry" }}',
-                    },
-                  },
-                },
-              ],
+              'x-reactions': [{ dependencies: ['coordinateType'], fulfill: { state: { visible: '{{ $deps[0] === "geometry" }}' } } }],
             },
           },
         },

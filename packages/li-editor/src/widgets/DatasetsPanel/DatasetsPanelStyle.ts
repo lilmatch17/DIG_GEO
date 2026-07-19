@@ -30,6 +30,9 @@ const useStyle = () => {
       height: calc(100% - 57px - 52px);
       padding: 0 20px 15px;
       overflow-y: auto;
+      overflow-x: hidden;
+      width: 100%;
+      box-sizing: border-box;
     `,
   };
 };

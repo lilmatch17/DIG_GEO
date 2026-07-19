@@ -13,9 +13,11 @@ const useStyle = () => {
       top: 0;
       right: 0;
       bottom: 0;
-      // 浮动面板，需要在其它控件资产上面
       z-index: ${zIndexPopupBase + 80};
+      display: flex;
+      flex-direction: column;
       box-sizing: border-box;
+      overflow-x: hidden;
       overflow-y: auto;
       text-align: start;
       background-color: ${colorBgContainer};
@@ -30,16 +32,21 @@ const useStyle = () => {
       align-items: center;
       justify-content: space-between;
       width: 100%;
-      padding: 14px;
+      padding: 10px 14px;
       background-color: ${colorBgContainer};
+      border-bottom: 1px solid #f0f0f0;
+      flex-shrink: 0;
     `,
 
     panelContent: css`
       padding: 14px;
+      overflow-x: hidden;
+      word-break: break-all;
+      overflow-wrap: break-word;
     `,
 
     panelHeaderTitle: css`
-      width: 250px;
+      flex: 1;
       overflow: hidden;
       font-weight: 600;
       font-size: 14px;

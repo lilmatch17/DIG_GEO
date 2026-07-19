@@ -15,6 +15,7 @@ export default implementWidget({
   },
   defaultProperties: {
     showSidePanel: false,
+    sidePanelOpacity: 100,
     showBottomPanel: false,
     showFloatPanel: false,
     collapsedFloatPanel: false,

@@ -101,7 +101,7 @@ export default (options: AttributeSchemaOptions) => {
                 dependencies: ['fillColorField', 'fillColorScale'],
                 fulfill: {
                   state: {
-                    visible: '{{ $deps[0] !== undefined && !$deps[1].isCustom }}',
+                    visible: '{{ $deps[0] !== undefined && $deps[1] && !$deps[1].isCustom }}',
                   },
                 },
               },

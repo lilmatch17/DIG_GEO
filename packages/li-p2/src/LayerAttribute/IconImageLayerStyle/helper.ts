@@ -1,4 +1,3 @@
-import { BuiltInImageList, UNKNOWN_ICON } from './constant';
 import type { IconImageLayerStyleAttributeValue } from './types';
 
 /**
@@ -6,40 +5,66 @@ import type { IconImageLayerStyleAttributeValue } from './types';
  * 将表单的平铺数据转为图层样式的数据结构
  * */
 export const iconImageLayerStyleFlatToConfig = (style: Record<string, any>) => {
-  const { iconImgScale, iconField, iconImg } = style;
+  const { iconType, iconLibraryField, iconCodeField, iconImg, iconImgScale, iconField, iconImgFallback } = style;
 
-  let icon = iconImg;
-  if (iconField) {
-    const { domain, range, unknown } = iconImgScale;
+  let icon: any = iconImg;
+  let fallbackIconUrl: string | undefined = undefined;
+
+  if (iconType === 'field') {
+    // === 基于字段模式：库号+代号（不改动） ===
+    // 使用 _iconUrl 预计算字段（由 useLayerProps 中的 enrichIconUrls 填充）
+    icon = '_iconUrl';
+    fallbackIconUrl = iconImgFallback || undefined;
+  } else if (iconField) {
+    // === 固定图标模式 + 基于字段：字段值映射图标（原始 master 逻辑） ===
+    const { domain, range, unknown } = iconImgScale || {};
+    const safeDomain = domain || [];
+    const safeRange = range || [];
+    // 构建 scale：unknown 是必须的，没有的话 L7 会把未匹配数据渲染为蓝色默认圆点
+    // 用 range 中第一个图标作为 fallback，若 range 为空则用 default-icon.svg
+    const scaleUnknown = unknown || safeRange[0] || '/icons/default-icon.svg';
     icon = {
-      field: style.iconField,
-      value: range,
+      field: iconField,
+      value: safeRange,
       scale: {
-        type: 'cat',
-        domain: domain,
-        unknown,
+        type: 'cat' as const,
+        domain: safeDomain,
+        unknown: scaleUnknown,
       },
     };
+    fallbackIconUrl = undefined;
+  } else {
+    // === 固定图标模式 + 无基于字段：单一固定图标 ===
+    fallbackIconUrl = undefined;
   }
 
-  let iconAtlas = {};
-  if (iconImg) {
-    const img = BuiltInImageList.find((item) => item.id === iconImg);
-    iconAtlas = img ? { [img.id]: img.url } : {};
-  } else {
-    iconAtlas = BuiltInImageList.filter((item) => iconImgScale.range.includes(item.id)).reduce(
-      (pre, { id, url }) => ({
-        ...pre,
-        [id]: url,
-      }),
-      // 'unknown_icon' 对应 iconImgScale unknown 的值
-      { unknown_icon: UNKNOWN_ICON },
-    );
+  // 构建 iconAtlas
+  let iconAtlas: Record<string, string> = {};
+  if (iconType === 'fixed') {
+    if (iconField && iconImgScale?.range) {
+      // field-based 模式：从 range 构建 iconAtlas
+      (iconImgScale.range as string[]).forEach((iconId: string) => {
+        if (iconId) iconAtlas[iconId] = iconId;
+      });
+      // 保证 scale.unknown 对应的 URL 在 atlas 中有条目（与 scale 中的 unknown 值一致）
+      const fallbackUrl = iconImgScale.unknown || iconImgScale.range?.[0] || '/icons/default-icon.svg';
+      if (fallbackUrl && !iconAtlas[fallbackUrl]) {
+        iconAtlas[fallbackUrl] = fallbackUrl;
+      }
+    } else if (iconImg) {
+      // 单一固定图标
+      iconAtlas = { [iconImg]: iconImg };
+    }
   }
+  // field 模式下 iconAtlas 由 enrichIconUrls 动态构建，不需要预填
 
   const styleConfig: IconImageLayerStyleAttributeValue = {
     iconAtlas,
     icon,
+    iconType: iconType || 'fixed',
+    iconLibraryField: iconType === 'field' ? iconLibraryField : undefined,
+    iconCodeField: iconType === 'field' ? iconCodeField : undefined,
+    fallbackIconUrl,
     fillColor: style.fillColor,
     radius: style.radiusField
       ? {
@@ -74,23 +99,42 @@ export const iconImageLayerStyleFlatToConfig = (style: Record<string, any>) => {
  * 将图层样式的数据结构转为表单的平铺数据
  * */
 export const iconImageLayerStyleConfigToFlat = (styleConfig: Partial<IconImageLayerStyleAttributeValue>) => {
-  const { radius, label, icon, iconStyle, minZoom = 0, maxZoom = 24, blend } = styleConfig || {};
+  const { radius, label, icon, iconStyle, minZoom = 0, maxZoom = 24, blend, iconType, iconLibraryField, iconCodeField, fallbackIconUrl } = styleConfig || {};
 
-  let iconImgScale = undefined;
-  if (typeof icon === 'object' && icon.value) {
+  let iconImgScale: any = undefined;
+  let iconFieldValue: string | undefined = undefined;
+  let iconImgValue: string | undefined;
+
+  if (iconType === 'field') {
+    // === 基于字段模式（库号+代号）：不改动 ===
+    iconImgValue = undefined;
+    iconFieldValue = undefined;
+    iconImgScale = undefined;
+  } else if (typeof icon === 'object' && icon?.value) {
+    // === 固定图标模式 + 基于字段：还原 iconField 和 iconImgScale ===
+    iconImgValue = undefined;
     iconImgScale = {
       range: icon.value,
-      domain: icon.scale?.domain,
-      unknownIcon: icon.scale?.unknown,
+      domain: icon.scale?.domain || [],
+      unknown: icon.scale?.unknown || undefined,
     };
+    iconFieldValue = Array.isArray(icon.field) ? icon.field[0] : icon.field;
+  } else {
+    // === 固定图标模式 + 无基于字段：单一固定图标 ===
+    iconImgValue = typeof icon === 'string' ? icon : undefined;
+    iconImgScale = undefined;
+    iconFieldValue = undefined;
   }
 
   const config = {
+    iconType: iconType || 'fixed',
+    iconImg: iconImgValue,
     iconImgScale,
-    iconImg: typeof icon === 'object' ? undefined : icon,
-    iconField: typeof icon === 'object' ? icon.field : undefined,
+    iconField: iconFieldValue,
+    iconImgFallback: iconType === 'field' ? fallbackIconUrl : undefined,
+    iconLibraryField: iconType === 'field' ? iconLibraryField : undefined,
+    iconCodeField: iconType === 'field' ? iconCodeField : undefined,
     fillOpacity: iconStyle?.opacity,
-    // fillColor,
     radiusField: typeof radius === 'object' && !Array.isArray(radius) ? radius?.field : undefined,
     radiusRange: typeof radius === 'object' && !Array.isArray(radius) ? radius?.value : undefined,
     radius: typeof radius !== 'object' ? radius : undefined,

@@ -1,5 +1,6 @@
 import type { ImplementEditorWidget } from '@antv/li-editor';
 import {
+  DatabaseDataset,
   DatasetsPanel,
   FetchDataset,
   FiltersPanel,
@@ -9,15 +10,15 @@ import {
   TilesetsDataset,
   UploadDataset,
   WidgetsPanel,
+  ZhongtaiApiDataset,
 } from '@antv/li-editor/dist/esm/widgets';
 
-import CaseDataset from './widgets/CaseDataset';
+import BackToProjects from './widgets/BackToProjects';
 import DatasetPreview from './widgets/DatasetPreview';
 import Docs from './widgets/Docs';
 import Export from './widgets/Export';
-import NavLogo from './widgets/NavLogo';
-import NoviceTour from './widgets/NoviceTour';
 import Preview from './widgets/Preview';
+import Screenshot from './widgets/Screenshot';
 
 export const DefaultEditorWidgets: ImplementEditorWidget[] = [
   DatasetsPanel,
@@ -25,20 +26,19 @@ export const DefaultEditorWidgets: ImplementEditorWidget[] = [
   LayersPanel,
   WidgetsPanel,
   UploadDataset,
-  NoviceTour,
+  MapSetting,
 ];
 
 // 自定义编辑器的控件
-export const editorWidgets: ImplementEditorWidget[] = [DatasetPreview, CaseDataset, Export];
+export const editorWidgets: ImplementEditorWidget[] = [DatasetPreview, Export];
 export const editorWidgetsWithBuilder: ImplementEditorWidget[] = [
   DatasetPreview,
   TilesetsDataset,
   FetchDataset,
-  CaseDataset,
-  NavLogo,
+  ZhongtaiApiDataset,
+  DatabaseDataset,
+  Screenshot,
+  BackToProjects,
   Preview,
-  MapSetting,
-  Export,
-  Docs,
   Folder,
 ];

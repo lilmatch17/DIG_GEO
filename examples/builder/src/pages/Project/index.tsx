@@ -84,7 +84,7 @@ export default function ProjectPage() {
   const items: TabsProps['items'] = [
     {
       key: 'my-project',
-      label: '我的项目',
+      label: '地理可视化项目',
       children: (
         <Row gutter={[48, 24]}>
           {projectList.map((item) => {

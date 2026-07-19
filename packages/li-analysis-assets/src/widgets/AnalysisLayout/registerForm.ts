@@ -7,6 +7,8 @@ import { getWidgetSlotFormSchema } from '@antv/li-sdk';
 export type Properties = {
   /** 是否显示侧边栏面板 */
   showSidePanel: boolean;
+  /** 侧边栏透明度 (0-100)，100=完全不透明 */
+  sidePanelOpacity: number;
   /** 是否显示底部面板 */
   showBottomPanel: boolean;
   /** 是否显示浮动面板 */
@@ -25,6 +27,20 @@ export default (props: WidgetRegisterFormProps): WidgetRegisterForm<Properties> 
       'x-decorator': 'FormItem',
       'x-component': 'Switch',
       default: false,
+    },
+    sidePanelOpacity: {
+      title: '侧边栏透明度',
+      type: 'number',
+      'x-display': 'hidden',
+      'x-decorator': 'FormItem',
+      'x-component': 'Slider',
+      'x-component-props': {
+        min: 0,
+        max: 100,
+        step: 5,
+        marks: { 0: '0%', 25: '25%', 50: '50%', 75: '75%', 100: '100%' },
+      },
+      default: 100,
     },
     // ...getWidgetSlotFormSchema(props, 'floatPanel', '浮动面板'),
     // showFloatPanel: {

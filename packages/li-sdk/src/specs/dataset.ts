@@ -118,6 +118,10 @@ export type LocalDatasetSchema<T extends Record<string, any> = Record<string, an
   columns: DatasetField[];
   /** 筛选器 */
   filter?: DatasetFilter;
+  /** 懒加载标记 */
+  _lazy?: boolean;
+  /** 数据行总数（懒加载时由后端提供） */
+  _rowCount?: number;
 };
 
 /**
