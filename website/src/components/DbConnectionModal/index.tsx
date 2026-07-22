@@ -104,15 +104,15 @@ export default function DbConnectionModal({ visible, onVisibleChange }: Props) {
 
   return (
     <Modal
-      title="中台数据库连接配置"
+      title="数据源连接配置"
       open={visible}
       onCancel={() => onVisibleChange(false)}
       footer={null}
-      width={900}
+      width={1000}
     >
       <div style={{ display: 'flex', gap: 24 }}>
         {/* 左侧连接列表 */}
-        <div style={{ width: 240, borderRight: '1px solid #f0f0f0', paddingRight: 16 }}>
+        <div style={{ width: 280, borderRight: '1px solid #aaadaf', paddingRight: 16 }}>
           <Button type="primary" block onClick={handleNew} style={{ marginBottom: 12 }}>
             新增连接
           </Button>
@@ -124,9 +124,9 @@ export default function DbConnectionModal({ visible, onVisibleChange }: Props) {
                 onClick={() => handleSelect(item)}
                 style={{
                   cursor: 'pointer',
-                  background: selectedId === item.connId ? '#e6f7ff' : 'transparent',
+                  background: selectedId === item.connId ? '#7b7b7c' : 'transparent',
                   color: selectedId === item.connId ? '#000' : undefined,
-                  padding: '8px 12px',
+                  padding: '4px 4px',
                   borderRadius: 4,
                 }}
                 actions={[
@@ -137,8 +137,9 @@ export default function DbConnectionModal({ visible, onVisibleChange }: Props) {
               >
                 <List.Item.Meta
                   avatar={<DatabaseOutlined />}
-                  title={item.connName}
-                  description={`${item.dbType === 'MySQL' ? 'Doris' : item.dbType} | ${item.host}:${item.port}`}
+                  title={`${item.connName} ( ${item.dbType === 'MySQL' ? 'Doris' : item.dbType} )`}
+                  // description={`${item.dbType === 'MySQL' ? 'Doris' : item.dbType} | ${item.host}:${item.port}`}
+                  description={`${item.host}:${item.port}`}
                 />
               </List.Item>
             )}

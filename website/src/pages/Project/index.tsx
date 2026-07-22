@@ -1,4 +1,13 @@
 import { DatabaseOutlined, DesktopOutlined, DownOutlined, EditOutlined, EllipsisOutlined, GlobalOutlined, PictureOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+  DingdingOutlined,
+  FileTextOutlined,
+  GithubOutlined,
+  QuestionCircleOutlined,
+  ReadOutlined,
+  ToolOutlined,
+  SettingOutlined,
+} from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { Button, Card, Col, Dropdown, Row, Space, Spin, Tooltip, Typography } from 'antd';
 import classNames from 'classnames';
@@ -110,6 +119,25 @@ const Project = () => {
     );
   }
 
+  // 系统配置下拉菜单
+  const settingMenuItems: MenuProps['items'] = [
+    {
+      key: '0',
+      label: (<span onClick={() => setDbConnectionVisible(true)}>数据源配置</span>),
+      icon: <DatabaseOutlined />,
+    },
+    {
+      key: '1',
+      label: (<span onClick={() => setIconLibraryVisible(true)}>图标库管理</span>),
+      icon: <PictureOutlined />,
+    },
+    {
+      key: '2',
+      label: (<span onClick={() => setTileConfigVisible(true)}>瓦片配置</span>),
+      icon: <GlobalOutlined />,
+    },
+  ];
+
   return (
     <div className={styles.project}>
       <div className={styles.projectHeader}>
@@ -142,7 +170,7 @@ const Project = () => {
           >
             创建项目
           </Dropdown.Button>
-          <Button icon={<DatabaseOutlined />} onClick={() => setDbConnectionVisible(true)}>
+          {/* <Button icon={<DatabaseOutlined />} onClick={() => setDbConnectionVisible(true)}>
             数据源
           </Button>
           <Button icon={<PictureOutlined />} onClick={() => setIconLibraryVisible(true)}>
@@ -150,7 +178,17 @@ const Project = () => {
           </Button>
           <Button icon={<GlobalOutlined />} onClick={() => setTileConfigVisible(true)}>
             瓦片配置
-          </Button>
+          </Button> */}
+
+          <Dropdown menu={{ items: settingMenuItems }} placement="bottomRight">
+            <Button
+              type="text"
+              size="middle"
+              icon={<SettingOutlined />}
+            >
+              系统配置
+            </Button>
+          </Dropdown>
         </Space>
       </div>
       <Row gutter={[48, 24]}>

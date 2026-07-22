@@ -132,13 +132,13 @@ const IconLibraryModal: React.FC<IconLibraryModalProps> = ({ visible, onVisibleC
       title="图标库管理"
       open={visible}
       onCancel={() => onVisibleChange(false)}
-      width={900}
+      width={1200}
       footer={null}
       destroyOnClose
     >
-      <div style={{ display: 'flex', height: 500, marginTop: 8 }}>
+      <div style={{ display: 'flex', height: 550, marginTop: 8 }}>
         {/* 左侧分类列表 */}
-        <div style={{ width: 200, borderRight: '1px solid #f0f0f0', paddingRight: 12, overflowY: 'auto' }}>
+        <div style={{ width: 250, borderRight: '1px solid #aaadaf', paddingRight: 12, overflowY: 'auto' }}>
           <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <strong>分类</strong>
             <Button type="text" size="small" icon={<PlusOutlined />} onClick={handleAddCategory} />
@@ -151,10 +151,14 @@ const IconLibraryModal: React.FC<IconLibraryModalProps> = ({ visible, onVisibleC
                 key={cat.categoryId}
                 style={{
                   cursor: 'pointer',
-                  background: selectedCategoryId === cat.categoryId ? '#e6f4ff' : undefined,
+                  background: selectedCategoryId === cat.categoryId ? '#aaadaf' : undefined,
                   color: selectedCategoryId === cat.categoryId ? '#000' : undefined,
-                  padding: '4px 8px',
+                  padding: '4px 1px',
                   borderRadius: 4,
+                  // display: 'flex',
+                  // alignItems: 'center',
+                  // justifyContent: 'space-between',
+                  // width: '100%',
                 }}
                 onClick={() => setSelectedCategoryId(cat.categoryId)}
                 actions={[
@@ -164,7 +168,18 @@ const IconLibraryModal: React.FC<IconLibraryModalProps> = ({ visible, onVisibleC
                   </Popconfirm>,
                 ]}
               >
-                {cat.categoryName}
+                <div 
+                  title={cat.categoryName} // 1. 鼠标悬浮显示完整名称
+                  style={{
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    flex: 1, 
+                    minWidth: 0,
+                    marginRight: 0,
+                }}>{cat.categoryName}
+                </div>
+                
               </List.Item>
             )}
           />
@@ -190,19 +205,19 @@ const IconLibraryModal: React.FC<IconLibraryModalProps> = ({ visible, onVisibleC
               ) : icons.length === 0 ? (
                 <Empty description="此分类暂无图标" />
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 12 }}>
                   {icons.map((icon) => (
                     <div
                       key={icon.iconId}
                       style={{
-                        border: '1px solid #f0f0f0',
+                        border: '1px solid #aaadaf',
                         borderRadius: 8,
                         padding: 8,
                         textAlign: 'center',
                         position: 'relative',
                       }}
                     >
-                      <img src={icon.url} alt={icon.originalName} style={{ width: 64, height: 64, objectFit: 'contain' }} />
+                      <img src={icon.url} alt={icon.originalName} style={{ width: 60, height: 60, objectFit: 'contain' }} />
                       <div style={{ fontSize: 12, color: '#666', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {icon.originalName}
                       </div>
@@ -245,8 +260,9 @@ const IconLibraryModal: React.FC<IconLibraryModalProps> = ({ visible, onVisibleC
       </div>
 
       {/* 底部状态栏 */}
-      <div style={{ borderTop: '1px solid #f0f0f0', marginTop: 12, paddingTop: 8, color: '#999', fontSize: 12 }}>
-        共 {categories.length} 个分类，{totalIcons} 个图标
+      <div style={{ borderTop: '1px solid #aaadaf', marginTop: 12, paddingTop: 8, color: '#999', fontSize: 12 }}>
+        共 {categories.length} 个分类
+        {/* ，{totalIcons} 个图标 */}
       </div>
     </Modal>
   );

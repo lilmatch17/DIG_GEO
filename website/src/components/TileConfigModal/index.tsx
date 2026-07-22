@@ -118,10 +118,10 @@ const TileConfigModal: React.FC<TileConfigModalProps> = ({ visible, onVisibleCha
       <div style={{ display: 'flex', height: 420 }}>
         {/* 左侧瓦片列表 */}
         <div style={{
-          width: 220, borderRight: '1px solid #f0f0f0',
+          width: 220, borderRight: '1px solid #b3b3b3',
           display: 'flex', flexDirection: 'column', background: 'transparent',
         }}>
-          <div style={{ padding: '12px', borderBottom: '1px solid #f0f0f0' }}>
+          <div style={{ padding: '12px', borderBottom: '1px solid #a8a8a8' }}>
             <Button type="primary" icon={<PlusOutlined />} block size="small" onClick={handleAdd}>
               新增瓦片
             </Button>
@@ -138,21 +138,27 @@ const TileConfigModal: React.FC<TileConfigModalProps> = ({ visible, onVisibleCha
                       onClick={() => setSelectedId(item.id!)}
                       style={{
                         padding: '10px 12px', cursor: 'pointer',
-                        background: selectedId === item.id ? '#e6f7ff' : 'transparent',
-                        borderLeft: selectedId === item.id ? '3px solid #1890ff' : '3px solid transparent',
+                        background: selectedId === item.id ? '#a5a5a5' : 'transparent',
+                        borderLeft: selectedId === item.id ? '5px solid #1890ff' : '5px solid transparent',
                       }}
                     >
-                      <Text strong style={{ fontSize: 13, color: '#262626' }}>{item.tileName}</Text>
+                      <Text strong style={{ fontSize: 13, color: '#ffffff' }}>{item.tileName} 
+                        {item.isDefault === '1' && (
+                          <span style={{ fontSize: 10, color: '#1890ff', background: '#e6f7ff', padding: '0 4px', borderRadius: 2 }}>
+                            默认
+                          </span>
+                      )}
+                      </Text>
                       <div>
                         <Text type="secondary" style={{ fontSize: 11, color: '#595959' }} ellipsis>
                           {item.tileUrl?.substring(0, 35)}{(item.tileUrl?.length || 0) > 35 ? '...' : ''}
                         </Text>
                       </div>
-                      {item.isDefault === '1' && (
+                      {/* {item.isDefault === '1' && (
                         <span style={{ fontSize: 10, color: '#1890ff', background: '#e6f7ff', padding: '0 4px', borderRadius: 2 }}>
                           默认
                         </span>
-                      )}
+                      )} */}
                     </div>
                   )}
                 />
