@@ -18,12 +18,12 @@ public class DatasetRepository {
     private JdbcTemplate jdbcTemplate;
 
     public List<Dataset> findByProjectId(String projectId) {
-        String sql = "SELECT DATASET_ID, PROJECT_ID, DATASET_NAME, TYPE, METADATA, CREATE_TIME FROM DIG_GEO.DATASETS WHERE PROJECT_ID = ?";
+        String sql = "SELECT DATASET_ID, PROJECT_ID, DATASET_NAME, TYPE, METADATA, FILTER, CREATE_TIME FROM DIG_GEO.DATASETS WHERE PROJECT_ID = ?";
         return jdbcTemplate.query(sql, new Object[]{projectId}, new DatasetRowMapper());
     }
 
     public Dataset findById(String datasetId) {
-        String sql = "SELECT DATASET_ID, PROJECT_ID, DATASET_NAME, TYPE, METADATA, CREATE_TIME FROM DIG_GEO.DATASETS WHERE DATASET_ID = ?";
+        String sql = "SELECT DATASET_ID, PROJECT_ID, DATASET_NAME, TYPE, METADATA, FILTER, CREATE_TIME FROM DIG_GEO.DATASETS WHERE DATASET_ID = ?";
         List<Dataset> datasets = jdbcTemplate.query(sql, new Object[]{datasetId}, new DatasetRowMapper());
         return datasets.isEmpty() ? null : datasets.get(0);
     }
@@ -32,24 +32,26 @@ public class DatasetRepository {
         if (dataset.getDatasetId() == null) {
             dataset.setDatasetId(UUID.randomUUID().toString());
         }
-        String sql = "INSERT INTO DIG_GEO.DATASETS (DATASET_ID, PROJECT_ID, DATASET_NAME, TYPE, METADATA, CREATE_TIME) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO DIG_GEO.DATASETS (DATASET_ID, PROJECT_ID, DATASET_NAME, TYPE, METADATA, FILTER, CREATE_TIME) VALUES (?, ?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql,
             dataset.getDatasetId(),
             dataset.getProjectId(),
             dataset.getDatasetName(),
             dataset.getType(),
             dataset.getMetadata(),
+            dataset.getFilter(),
             dataset.getCreateTime()
         );
         return dataset;
     }
 
     public Dataset update(Dataset dataset) {
-        String sql = "UPDATE DIG_GEO.DATASETS SET DATASET_NAME = ?, TYPE = ?, METADATA = ? WHERE DATASET_ID = ?";
+        String sql = "UPDATE DIG_GEO.DATASETS SET DATASET_NAME = ?, TYPE = ?, METADATA = ?, FILTER = ? WHERE DATASET_ID = ?";
         jdbcTemplate.update(sql,
             dataset.getDatasetName(),
             dataset.getType(),
             dataset.getMetadata(),
+            dataset.getFilter(),
             dataset.getDatasetId()
         );
         return dataset;
@@ -74,6 +76,7 @@ public class DatasetRepository {
             dataset.setDatasetName(rs.getString("DATASET_NAME"));
             dataset.setType(rs.getString("TYPE"));
             dataset.setMetadata(rs.getString("METADATA"));
+            dataset.setFilter(rs.getString("FILTER"));
             dataset.setCreateTime(rs.getString("CREATE_TIME"));
             return dataset;
         }

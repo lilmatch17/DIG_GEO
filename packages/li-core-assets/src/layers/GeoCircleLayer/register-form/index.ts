@@ -1,16 +1,17 @@
 import type { LayerRegisterForm, LayerRegisterFormProps, LayerRegisterFormResultType } from '@antv/li-sdk';
 import getSchema from './schema';
 
-/**
- * 地理圆图层 visConfig 类型
- */
 export type GeoCircleLayerVisConfig = {
-  radiusValue: number;
+  visible?: boolean;
+  outerRadiusField: string;
+  innerRadiusField?: string;
   radiusUnit: 'meters' | 'kilometers' | 'miles' | 'nauticalmiles';
   fillColor: string;
   fillOpacity: number;
   strokeColor: string;
   lineWidth: number;
+  lineType: 'solid' | 'dash';
+  clipChina?: boolean;
   label: {
     field?: string;
     visible: boolean;
@@ -27,9 +28,6 @@ export type GeoCircleLayerVisConfig = {
   coordinateType?: string;
 };
 
-/**
- * 表单数据格式转换，将结构化数据转换为表单的平铺结构
- */
 const toValues = (config: LayerRegisterFormResultType<GeoCircleLayerVisConfig>) => {
   const { sourceConfig, visConfig } = config;
   const { parser } = sourceConfig;
@@ -39,18 +37,21 @@ const toValues = (config: LayerRegisterFormResultType<GeoCircleLayerVisConfig>) 
     ? { geometry: parser.geometry }
     : { longitude: parser?.x, latitude: parser?.y };
 
-  const { radiusValue, radiusUnit, fillColor, fillOpacity, strokeColor, lineWidth, label, minZoom, maxZoom, blend } =
+  const { outerRadiusField, innerRadiusField, radiusUnit, fillColor, fillOpacity, strokeColor, lineWidth, lineType, clipChina, label, minZoom, maxZoom, blend } =
     visConfig || {};
 
   return {
     coordinateType,
     ...pointCoordinate,
-    radiusValue: radiusValue || 1000,
+    outerRadiusField: outerRadiusField || '',
+    innerRadiusField: innerRadiusField || '',
     radiusUnit: radiusUnit || 'meters',
     fillColor: fillColor || 'rgb(90, 216, 166)',
     fillOpacity: fillOpacity ?? 0.8,
     strokeColor: strokeColor || '#a9abb1',
     lineWidth: lineWidth ?? 1,
+    lineType: lineType || 'solid',
+    clipChina: clipChina || false,
     labelField: label?.field,
     labelColor: label?.style?.fill || '#c0c0c0',
     labelFontSize: label?.style?.fontSize || 15,
@@ -60,9 +61,6 @@ const toValues = (config: LayerRegisterFormResultType<GeoCircleLayerVisConfig>) 
   };
 };
 
-/**
- * 表单数据格式转换，将表单的平铺数据结构转为结构化数据
- */
 const fromValues = (values: Record<string, any>): LayerRegisterFormResultType<GeoCircleLayerVisConfig> => {
   const coordinateType = values.coordinateType || 'table';
   const pointCoordinate = coordinateType === 'geometry'
@@ -76,12 +74,15 @@ const fromValues = (values: Record<string, any>): LayerRegisterFormResultType<Ge
   };
 
   const visConfig: GeoCircleLayerVisConfig = {
-    radiusValue: values.radiusValue || 1000,
+    outerRadiusField: values.outerRadiusField || '',
+    innerRadiusField: values.innerRadiusField || '',
     radiusUnit: values.radiusUnit || 'meters',
     fillColor: values.fillColor || 'rgb(90, 216, 166)',
     fillOpacity: values.fillOpacity ?? 0.8,
     strokeColor: values.strokeColor || '#a9abb1',
     lineWidth: values.lineWidth ?? 1,
+    lineType: values.lineType || 'solid',
+    clipChina: values.clipChina || false,
     label: {
       field: values.labelField,
       visible: Boolean(values.labelField),
@@ -98,17 +99,10 @@ const fromValues = (values: Record<string, any>): LayerRegisterFormResultType<Ge
     coordinateType,
   };
 
-  return {
-    sourceConfig,
-    visConfig,
-  };
+  return { sourceConfig, visConfig };
 };
 
 export default (props: LayerRegisterFormProps): LayerRegisterForm<GeoCircleLayerVisConfig> => {
   const schema = getSchema(props.datasetFields);
-  return {
-    schema,
-    toValues,
-    fromValues,
-  };
+  return { schema, toValues, fromValues };
 };

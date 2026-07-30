@@ -67,7 +67,7 @@ public class DbConnectionController {
         try {
             DbConnection conn = dbConnService.getFullConnection(id);
             if (conn == null) return ResponseEntity.notFound().build();
-            List<String> tables = dbConnService.listTables(conn);
+            List<Map<String, String>> tables = dbConnService.listTables(conn);
             return ResponseEntity.ok(tables);
         } catch (Exception e) {
             Map<String, Object> error = new LinkedHashMap<>();
@@ -113,16 +113,7 @@ public class DbConnectionController {
             DbConnection conn = dbConnService.getFullConnection(id);
             if (conn == null) return ResponseEntity.notFound().build();
 
-            // 数据量探查
             int rowCount = dbConnService.getRowCount(conn, tableName);
-
-            // 2万行限制
-            if (rowCount > 20000) {
-                Map<String, Object> error = new LinkedHashMap<>();
-                error.put("error", "数据量超过 2 万行（" + rowCount + " 行），不支持创建");
-                return ResponseEntity.status(400).body(error);
-            }
-
             DbConnectionService.TableDataResult tableData = dbConnService.queryTableWithColumns(conn, tableName);
 
             Map<String, Object> result = new LinkedHashMap<>();

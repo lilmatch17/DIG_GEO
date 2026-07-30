@@ -196,18 +196,37 @@ const Builder = () => {
     const ts = Date.now();
     // 默认瓦片按 defaultNum 排序，小号在下层
     const sorted = [...selectedTiles].sort((a, b) => (a.defaultNum || 99) - (b.defaultNum || 99));
-    const newDatasets = sorted.map((tile, i) => ({
-      id: `tile_${ts}_${i}`,
-      type: 'raster-tile' as const,
-      metadata: { name: tile.tileName, description: '瓦片底图' },
-      properties: { type: 'xyz-tile' as const, url: tile.tileUrl, minZoom: tile.minZoom ?? 0, maxZoom: tile.maxZoom ?? 18 },
-    }));
+    const newDatasets = sorted.map((tile, i) => {
+      // 瓦片 URL 变换
+      let tileUrl = tile.tileUrl;
+      const origin = tile.origin;
+      const isCustomOrigin = origin && origin !== '-180,90';
+      const originLat = isCustomOrigin ? parseFloat(origin!.split(',')[1]) : 90;
+
+      if (tile.tileScheme === 'TMS') {
+        // TMS 翻转 Y 轴
+        tileUrl = tileUrl.replace(/\{y\}/g, '{-y}');
+        if (isCustomOrigin) {
+          // TMS + 自定义原点：需要同时翻转和偏移，暂用 {-y} 翻转，原点偏移暂不支持
+          console.warn('[Builder] TMS + custom origin not fully supported, origin offset ignored for:', tile.tileName);
+        }
+      } else if (isCustomOrigin) {
+        // XYZ + 自定义原点：用 {oy:lat0} 替代 {y}，L7 内部计算 Y 偏移
+        tileUrl = tileUrl.replace(/\{y\}/g, `{oy:${originLat}}`);
+      }
+      return {
+        id: `tile_${ts}_${i}`,
+        type: 'raster-tile' as const,
+        metadata: { name: tile.tileName, description: '瓦片底图' },
+        properties: { type: 'xyz-tile' as const, url: tileUrl, minZoom: tile.minZoom ?? 0, maxZoom: tile.maxZoom ?? 18, crs: tile.crs || 'EPSG:3857', tileScheme: tile.tileScheme || 'XYZ' },
+      };
+    });
     const newLayers = sorted.map((tile, i) => ({
       id: `tile_layer_${ts}_${i}`,
       type: 'TileLayer',
       metadata: { name: tile.tileName },
       sourceConfig: { datasetId: `tile_${ts}_${i}`, parser: { type: 'rasterTile' } },
-      visConfig: { visible: true, style: { opacity: 1 }, minZoom: tile.minZoom ?? 0, maxZoom: tile.maxZoom ?? 18, blend: 'normal' },
+      visConfig: { visible: true, style: { opacity: 1 }, minZoom: tile.minZoom ?? 0, maxZoom: tile.maxZoom ?? 18, blend: 'normal', crs: tile.crs || 'EPSG:3857', tileScheme: tile.tileScheme || 'XYZ' },
     }));
 
     const updatedConfig: Application = {

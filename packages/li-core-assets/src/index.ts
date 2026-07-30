@@ -2,6 +2,7 @@ import {
   ArcLayer,
   BubbleLayer,
   ChoroplethLayer,
+  GeoCircleLayer,
   GridLayer,
   H3HexagonLayer,
   HeatmapLayer,
@@ -26,6 +27,7 @@ const layers = [
   H3HexagonLayer,
   TileLayer,
   MVTLayer,
+  GeoCircleLayer,
 ];
 const widgets = Object.values(Widgets);
 const services = Object.values(Services);

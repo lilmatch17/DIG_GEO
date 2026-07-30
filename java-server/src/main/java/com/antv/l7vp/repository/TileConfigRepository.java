@@ -17,7 +17,7 @@ public class TileConfigRepository {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    private static final String SELECT_COLS = "ID, TILE_URL, TILE_NAME, MIN_ZOOM, MAX_ZOOM, UPDATE_TIME, \"DEFAULT\", DEFAULT_NUM";
+    private static final String SELECT_COLS = "ID, TILE_URL, TILE_NAME, MIN_ZOOM, MAX_ZOOM, UPDATE_TIME, IS_DEFAULT, DEFAULT_NUM, CRS, TILE_SCHEME, ORIGIN";
 
     public List<TileConfig> findAll() {
         String sql = "SELECT " + SELECT_COLS + " FROM DIG_GEO.TILE_CONFIG ORDER BY DEFAULT_NUM ASC NULLS LAST, UPDATE_TIME DESC";
@@ -32,7 +32,7 @@ public class TileConfigRepository {
 
     /** 返回默认瓦片列表（按defaultNum排序） */
     public List<TileConfig> findDefaults() {
-        String sql = "SELECT " + SELECT_COLS + " FROM DIG_GEO.TILE_CONFIG WHERE \"DEFAULT\" = '1' ORDER BY DEFAULT_NUM ASC";
+        String sql = "SELECT " + SELECT_COLS + " FROM DIG_GEO.TILE_CONFIG WHERE IS_DEFAULT = '1' ORDER BY DEFAULT_NUM ASC";
         return jdbcTemplate.query(sql, new TileConfigRowMapper());
     }
 
@@ -46,21 +46,25 @@ public class TileConfigRepository {
         if (config.getId() == null || config.getId().isEmpty()) {
             config.setId(UUID.randomUUID().toString());
         }
-        String sql = "INSERT INTO DIG_GEO.TILE_CONFIG (ID, TILE_URL, TILE_NAME, MIN_ZOOM, MAX_ZOOM, UPDATE_TIME, \"DEFAULT\", DEFAULT_NUM) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO DIG_GEO.TILE_CONFIG (ID, TILE_URL, TILE_NAME, MIN_ZOOM, MAX_ZOOM, UPDATE_TIME, IS_DEFAULT, DEFAULT_NUM, CRS, TILE_SCHEME, ORIGIN) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql,
             config.getId(), config.getTileUrl(), config.getTileName(),
             config.getMinZoom(), config.getMaxZoom(), config.getUpdateTime(),
-            config.getIsDefault(), config.getDefaultNum()
+            config.getIsDefault(), config.getDefaultNum(),
+            config.getCrs(), config.getTileScheme(),
+            config.getOrigin()
         );
         return config;
     }
 
     public TileConfig update(TileConfig config) {
-        String sql = "UPDATE DIG_GEO.TILE_CONFIG SET TILE_URL = ?, TILE_NAME = ?, MIN_ZOOM = ?, MAX_ZOOM = ?, UPDATE_TIME = ?, \"DEFAULT\" = ?, DEFAULT_NUM = ? WHERE ID = ?";
+        String sql = "UPDATE DIG_GEO.TILE_CONFIG SET TILE_URL = ?, TILE_NAME = ?, MIN_ZOOM = ?, MAX_ZOOM = ?, UPDATE_TIME = ?, IS_DEFAULT = ?, DEFAULT_NUM = ?, CRS = ?, TILE_SCHEME = ?, ORIGIN = ? WHERE ID = ?";
         jdbcTemplate.update(sql,
             config.getTileUrl(), config.getTileName(),
             config.getMinZoom(), config.getMaxZoom(), config.getUpdateTime(),
             config.getIsDefault(), config.getDefaultNum(),
+            config.getCrs(), config.getTileScheme(),
+            config.getOrigin(),
             config.getId()
         );
         return config;
@@ -81,9 +85,12 @@ public class TileConfigRepository {
             config.setMinZoom(rs.getInt("MIN_ZOOM"));
             config.setMaxZoom(rs.getInt("MAX_ZOOM"));
             config.setUpdateTime(rs.getString("UPDATE_TIME"));
-            config.setIsDefault(rs.getString("DEFAULT"));
+            config.setIsDefault(rs.getString("IS_DEFAULT"));
             config.setDefaultNum(rs.getInt("DEFAULT_NUM"));
             if (rs.wasNull()) config.setDefaultNum(null);
+            config.setCrs(rs.getString("CRS"));
+            config.setTileScheme(rs.getString("TILE_SCHEME"));
+            config.setOrigin(rs.getString("ORIGIN"));
             return config;
         }
     }

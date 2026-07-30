@@ -9,5 +9,6 @@ public class Dataset {
     private String datasetName;
     private String type;
     private String metadata;
+    private String filter;
     private String createTime;
 }

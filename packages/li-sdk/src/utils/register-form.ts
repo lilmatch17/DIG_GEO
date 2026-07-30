@@ -50,12 +50,27 @@ export const getWidgetSlotFormSchema = (
 
 /**
  *  获取数据集列字段带有元数据信息
+ *  @param columns 列定义
+ *  @param labelFormat 标签格式: 'default' = column_name（注释）, 'commentOnly' = 仅注释（属性面板用）
  */
-export const getDatasetFields = (columns: DatasetField[]) => {
+export const getDatasetFields = (columns: DatasetField[], labelFormat: 'default' | 'commentOnly' = 'default') => {
   const fieldList: DatasetFieldWithMeta[] = columns.map((item) => {
     const { color: typeColor, value: typeName } = DATASET_FIELD_TYPE_MAP[item.type];
-    return { ...item, label: item.name, value: item.name, type: item.type, typeName, typeColor };
+    let label: string;
+    if (item.displayName) {
+      label = `${item.name}（${item.displayName}）`;
+    } else {
+      label = item.name;
+    }
+    return { ...item, label, value: item.name, type: item.type, typeName, typeColor };
   });
+  const displayNameCount = columns.filter((c: any) => c.displayName).length;
+  if (displayNameCount > 0) {
+    console.log(`[getDatasetFields] format=${labelFormat}, total=${columns.length}, withDisplayName=${displayNameCount}, samples:`,
+      fieldList.filter((f: any) => f.label !== f.value).slice(0, 5).map((f: any) => `${f.value}→${f.label}`));
+  } else {
+    console.log(`[getDatasetFields] format=${labelFormat}, total=${columns.length}, NO displayName found`);
+  }
   return fieldList;
 };
 

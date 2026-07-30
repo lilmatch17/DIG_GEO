@@ -6,7 +6,7 @@ export default implementEditorWidget({
   component: DatabaseDataset,
   metadata: {
     name: 'DatabaseDataset',
-    displayName: '中台数据库',
+    displayName: '中台数据表',
     description: '通过数据库连接查询数据',
   },
   container: {

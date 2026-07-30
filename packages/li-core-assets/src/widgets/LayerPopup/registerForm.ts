@@ -71,7 +71,10 @@ const getLayerFieldsFormSchemas = (props: WidgetRegisterFormProps) => {
       if (dataset === undefined || !isLocalOrRemoteDataset(dataset)) return undefined;
 
       const columns = dataset?.columns || [];
-      const options = columns.map((f: DatasetField) => ({ label: f.name, value: f.name }));
+      const options = columns.map((f: DatasetField) => ({
+        label: f.displayName ? `${f.name}（${f.displayName}）` : f.name,
+        value: f.name,
+      }));
 
       return {
         [`items.${item.id}`]: {
@@ -158,6 +161,30 @@ const getLayerFieldsFormSchemas = (props: WidgetRegisterFormProps) => {
 };
 
 export default (props: WidgetRegisterFormProps): WidgetRegisterForm<Properties, FormValues> => {
+  // 构建 fieldName → displayName 映射，用于自动填充 formatField（数据库字段注释）
+  const displayNameMap: Record<string, string> = {};
+  props.datasets.forEach((ds) => {
+    if (isLocalOrRemoteDataset(ds)) {
+      (ds.columns || []).forEach((col: DatasetField) => {
+        if ((col as any).displayName) displayNameMap[col.name] = (col as any).displayName;
+      });
+    }
+  });
+  console.log('[LayerPopup.registerForm] displayNameMap keys:', Object.keys(displayNameMap).length, 'samples:', Object.keys(displayNameMap).slice(0, 5));
+
+  // 覆盖 fromValues，自动填入 formatField = 字段注释
+  const fromValuesLocal = (values: FormValues): Properties => {
+    const { items, ...rest } = values;
+    const formatItem = Object.entries(items).map(([key, fields]) => ({
+      layerId: key,
+      fields: fields.map((field) => ({
+        field: field.field,
+        formatField: field.formatField || displayNameMap[field.field] || undefined,
+      })),
+    }));
+    return { ...rest, items: formatItem };
+  };
+
   // 属性面板表单的 Schema 定义，来自表单库 formily 的 Schema
   const schema = {
     isOpen: {
@@ -193,5 +220,5 @@ export default (props: WidgetRegisterFormProps): WidgetRegisterForm<Properties, 
     ...getLayerFieldsFormSchemas(props),
   };
 
-  return { schema, toValues, fromValues };
+  return { schema, toValues, fromValues: fromValuesLocal };
 };
