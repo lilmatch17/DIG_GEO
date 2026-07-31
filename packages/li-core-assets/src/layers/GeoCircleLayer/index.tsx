@@ -27,12 +27,16 @@ export default implementLayer({
     color: 'cyan',
   },
   defaultVisConfig: {
-    radiusValue: 1000,
+    visible: true,
+    outerRadiusField: '',
+    innerRadiusField: '',
     radiusUnit: 'meters' as const,
     fillColor: 'rgb(90, 216, 166)',
     fillOpacity: 0.8,
     strokeColor: '#a9abb1',
     lineWidth: 1,
+    lineType: 'solid' as const,
+    clipChina: false,
     label: {
       visible: false,
       field: undefined,

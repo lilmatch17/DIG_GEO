@@ -1,5 +1,4 @@
 export default [
-  { path: '/*', redirect: '/project' },
   {
     name: 'workspace',
     path: '/',
@@ -59,6 +58,12 @@ export default [
         path: '/template/:id',
         component: '@/pages/Preview/Template',
       },
+      {
+        // 共享/嵌入页面：纯地图，无编辑器UI
+        name: 'share',
+        path: '/share/:id',
+        component: '@/pages/Share',
+      },
     ],
   },
   {
@@ -67,4 +72,5 @@ export default [
     path: '/docs',
     component: '@/pages/Docs',
   },
+  { path: '/*', redirect: '/project' },
 ];

@@ -1,7 +1,7 @@
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import {
   Button, Form, Input, InputNumber, message, Modal, Popconfirm,
-  Switch, List, Typography, Empty, Spin,
+  Select, Switch, List, Typography, Empty, Spin,
 } from 'antd';
 import { useEffect, useState } from 'react';
 import {
@@ -49,6 +49,10 @@ const TileConfigModal: React.FC<TileConfigModalProps> = ({ visible, onVisibleCha
           maxZoom: tile.maxZoom ?? 18,
           isDefault: tile.isDefault === '1',
           defaultNum: tile.defaultNum || 1,
+          crs: tile.crs || 'EPSG:3857',
+          tileScheme: tile.tileScheme || 'XYZ',
+          originLng: tile.origin ? parseFloat(tile.origin.split(',')[0]) : -180,
+          originLat: tile.origin ? parseFloat(tile.origin.split(',')[1]) : 90,
         });
       }
     }
@@ -84,6 +88,9 @@ const TileConfigModal: React.FC<TileConfigModalProps> = ({ visible, onVisibleCha
         maxZoom: values.maxZoom,
         isDefault: values.isDefault ? '1' : undefined,
         defaultNum: values.isDefault ? (values.defaultNum || 1) : undefined,
+        crs: values.crs || 'EPSG:3857',
+        tileScheme: values.tileScheme || 'XYZ',
+        origin: `${values.originLng ?? -180},${values.originLat ?? 90}`,
       });
       message.success('瓦片已保存');
       loadTiles();
@@ -199,6 +206,42 @@ const TileConfigModal: React.FC<TileConfigModalProps> = ({ visible, onVisibleCha
                 initialValue={18}
               >
                 <InputNumber min={1} max={24} style={{ width: '100%' }} />
+              </Form.Item>
+              <Form.Item
+                name="crs"
+                label="坐标系 (CRS)"
+                initialValue="EPSG:3857"
+                extra="瓦片的坐标参考系"
+              >
+                <Select
+                  options={[
+                    { value: 'EPSG:3857', label: 'EPSG:3857 (Web墨卡托)' },
+                    { value: 'EPSG:4326', label: 'EPSG:4326 (地理坐标)' },
+                  ]}
+                />
+              </Form.Item>
+              <Form.Item
+                name="tileScheme"
+                label="编号方式"
+                initialValue="XYZ"
+                extra="XYZ: Y轴从上往下; TMS: Y轴从下往上"
+              >
+                <Select
+                  options={[
+                    { value: 'XYZ', label: 'XYZ' },
+                    { value: 'TMS', label: 'TMS' },
+                  ]}
+                />
+              </Form.Item>
+              <Form.Item label="瓦片原点" extra="默认 (-180, 90)，瓦片服务原点坐标">
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Form.Item name="originLng" noStyle initialValue={-180}>
+                    <InputNumber style={{ flex: 1 }} placeholder="经度" />
+                  </Form.Item>
+                  <Form.Item name="originLat" noStyle initialValue={90}>
+                    <InputNumber style={{ flex: 1 }} placeholder="纬度" />
+                  </Form.Item>
+                </div>
               </Form.Item>
               <Form.Item
                 name="isDefault"

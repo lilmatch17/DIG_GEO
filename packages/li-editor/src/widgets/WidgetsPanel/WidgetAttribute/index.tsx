@@ -44,6 +44,11 @@ const WidgetAttribute: React.FC<WidgetAttributeProps> = (props) => {
         const domain = cloumn.type === 'string' ? item.getColumnDomain(cloumn.name) : [];
         return { ...cloumn, domain };
       });
+      const displayNameCols = columns.filter((c: any) => c.displayName);
+      if (displayNameCols.length > 0) {
+        console.log('[WidgetAttribute] dataset', item.id, 'columns with displayName:', displayNameCols.length,
+          displayNameCols.slice(0, 3).map((c: any) => `${c.name}→${c.displayName}`));
+      }
 
       return {
         ...item.schema,
@@ -92,8 +97,12 @@ const WidgetAttribute: React.FC<WidgetAttributeProps> = (props) => {
     updateState((draft) => {
       const index = draft.widgets.findIndex((item) => item.id === widgetSchema.id);
       if (index !== -1) {
-        // isEqual
-        draft.widgets[index].properties = omit(values, 'slots');
+        const props = omit(values, 'slots');
+        // 调试：筛选器保存时打印 defaultFilters
+        if (widgetSchema.type === 'FilterControl') {
+          console.log('[WidgetAttribute] FilterControl save, defaultFilters:', JSON.stringify(props.defaultFilters));
+        }
+        draft.widgets[index].properties = props;
       }
     });
   }, []);

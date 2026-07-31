@@ -103,9 +103,24 @@ public class ApplicationAssembler {
                 colJson.put("name", col.getColumnName());
                 colJson.put("type", col.getColumnType());
                 colJson.put("index", col.getColumnIndex());
+                if (col.getColumnComment() != null && !col.getColumnComment().isEmpty()) {
+                    colJson.put("displayName", col.getColumnComment());
+                }
                 columnsList.add(colJson);
             }
             dsJson.put("columns", columnsList);
+
+            // 筛选器配置（从 DATASETS.FILTER CLOB 恢复）
+            if (ds.getFilter() != null && !ds.getFilter().isEmpty()) {
+                try {
+                    Map<String, Object> filterObj = objectMapper.readValue(ds.getFilter(), Map.class);
+                    if (filterObj != null) {
+                        dsJson.put("filter", filterObj);
+                    }
+                } catch (Exception e) {
+                    // ignore filter parse errors
+                }
+            }
 
             // 数据行懒加载标记
             if ("local".equals(ds.getType())) {
@@ -311,6 +326,11 @@ public class ApplicationAssembler {
                             col.setColumnType(colJson.get("type") != null ? colJson.get("type").toString() : null);
                             Object idx = colJson.get("index");
                             col.setColumnIndex(idx != null ? ((Number) idx).intValue() : i);
+                            // 保存字段注释（displayName）
+                            Object comment = colJson.get("displayName");
+                            if (comment != null && !comment.toString().isEmpty()) {
+                                col.setColumnComment(comment.toString());
+                            }
                             columnEntities.add(col);
                         }
                         datasetColumnRepository.batchInsert(dsId, columnEntities);
@@ -356,6 +376,11 @@ public class ApplicationAssembler {
                             col.setColumnType(colJson.get("type") != null ? colJson.get("type").toString() : null);
                             Object idx = colJson.get("index");
                             col.setColumnIndex(idx != null ? ((Number) idx).intValue() : i);
+                            // 保存字段注释（displayName）
+                            Object comment = colJson.get("displayName");
+                            if (comment != null && !comment.toString().isEmpty()) {
+                                col.setColumnComment(comment.toString());
+                            }
                             columnEntities.add(col);
                         }
                         datasetColumnRepository.batchInsert(dsId, columnEntities);
@@ -648,6 +673,14 @@ public class ApplicationAssembler {
             dataset.setMetadata(metaToStore.isEmpty() ? null : objectMapper.writeValueAsString(metaToStore));
         } catch (Exception e) {
             dataset.setMetadata(null);
+        }
+        // 存储筛选器配置到 FILTER CLOB 字段
+        if (json.containsKey("filter")) {
+            try {
+                dataset.setFilter(objectMapper.writeValueAsString(json.get("filter")));
+            } catch (Exception e) {
+                dataset.setFilter(null);
+            }
         }
     }
 

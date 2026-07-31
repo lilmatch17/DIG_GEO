@@ -105,9 +105,10 @@ public class DbConnectionService {
     }
 
     /**
-     * 获取 schema 下的表列表
+     * 获取 schema 下的表列表（含注释）
+     * 返回 [{"name": "table_name", "comment": "中文注释"}, ...]
      */
-    public List<String> listTables(DbConnection conn) {
+    public List<Map<String, String>> listTables(DbConnection conn) {
         String url = buildJdbcUrl(conn);
         String driver = getDriverClass(conn.getDbType());
         try {
@@ -115,7 +116,7 @@ public class DbConnectionService {
         } catch (ClassNotFoundException e) {
             throw new RuntimeException("找不到数据库驱动: " + driver, e);
         }
-        List<String> tables = new ArrayList<>();
+        List<Map<String, String>> tables = new ArrayList<>();
         try (Connection c = DriverManager.getConnection(url, conn.getUsername(), conn.getPassword())) {
             DatabaseMetaData meta = c.getMetaData();
             String schemaPattern = conn.getSchemaName();
@@ -128,14 +129,18 @@ public class DbConnectionService {
             }
             try (ResultSet rs = meta.getTables(null, schemaPattern, "%", new String[]{"TABLE"})) {
                 while (rs.next()) {
-                    tables.add(rs.getString("TABLE_NAME"));
+                    Map<String, String> table = new LinkedHashMap<>();
+                    table.put("name", rs.getString("TABLE_NAME"));
+                    String remarks = rs.getString("REMARKS");
+                    table.put("comment", remarks != null ? remarks : "");
+                    tables.add(table);
                 }
             }
         } catch (SQLException e) {
             log.error("获取表列表失败: {}", e.getMessage());
             throw new RuntimeException("获取表列表失败: " + e.getMessage(), e);
         }
-        Collections.sort(tables);
+        tables.sort((a, b) -> a.get("name").compareToIgnoreCase(b.get("name")));
         return tables;
     }
 
@@ -219,8 +224,44 @@ public class DbConnectionService {
     }
 
     /**
-     * 从 ResultSetMetaData 提取列元数据
+     * 从 ResultSetMetaData 提取列元数据（含字段注释）
+     * JDBC 的 getColumns() 方法在 DM8/MySQL/Doris 下都能获取 REMARKS
+     * 注意：MySQL 需要连接参数 useInformationSchema=true 才能获取注释
      */
+    private List<Map<String, String>> extractColumnMetadata(ResultSetMetaData meta, Connection conn,
+                                                             String catalog, String schema, String tableName) throws SQLException {
+        // 先从 DatabaseMetaData.getColumns() 获取字段注释
+        Map<String, String> commentMap = new LinkedHashMap<>();
+        try {
+            DatabaseMetaData dbMeta = conn.getMetaData();
+            try (ResultSet colRs = dbMeta.getColumns(catalog, schema, tableName, "%")) {
+                while (colRs.next()) {
+                    String colName = colRs.getString("COLUMN_NAME");
+                    String remarks = colRs.getString("REMARKS");
+                    if (remarks != null && !remarks.isEmpty()) {
+                        commentMap.put(colName, remarks);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            log.warn("获取列注释失败 (可能是驱动不支持): {}", e.getMessage());
+        }
+
+        List<Map<String, String>> columns = new ArrayList<>();
+        int colCount = meta.getColumnCount();
+        for (int i = 1; i <= colCount; i++) {
+            Map<String, String> col = new LinkedHashMap<>();
+            col.put("name", meta.getColumnName(i));
+            String sqlType = meta.getColumnTypeName(i);
+            col.put("type", mapSqlTypeToFrontendType(sqlType));
+            col.put("sqlType", sqlType != null ? sqlType : "UNKNOWN");
+            col.put("comment", commentMap.getOrDefault(meta.getColumnName(i), ""));
+            columns.add(col);
+        }
+        return columns;
+    }
+
+    /** 保持旧签名兼容（无 comment 场景） */
     private List<Map<String, String>> extractColumnMetadata(ResultSetMetaData meta) throws SQLException {
         List<Map<String, String>> columns = new ArrayList<>();
         int colCount = meta.getColumnCount();
@@ -230,6 +271,7 @@ public class DbConnectionService {
             String sqlType = meta.getColumnTypeName(i);
             col.put("type", mapSqlTypeToFrontendType(sqlType));
             col.put("sqlType", sqlType != null ? sqlType : "UNKNOWN");
+            col.put("comment", "");
             columns.add(col);
         }
         return columns;
@@ -256,45 +298,87 @@ public class DbConnectionService {
     }
 
     /**
-     * 预览表数据（前 N 行），同时返回列元数据
+     * 预览表数据（前 N 行），同时返回列元数据（含字段注释）
      */
     public TableDataResult previewTableWithColumns(DbConnection conn, String tableName, int limit) {
         String sql = "SELECT * FROM " + safeTableName(conn,tableName) + " LIMIT " + limit;
-        return executeQuery(conn, sql, rs -> {
-            List<Map<String, Object>> rows = new ArrayList<>();
-            ResultSetMetaData meta = rs.getMetaData();
-            List<Map<String, String>> columns = extractColumnMetadata(meta);
-            int colCount = meta.getColumnCount();
-            while (rs.next()) {
-                Map<String, Object> row = new LinkedHashMap<>();
-                for (int i = 1; i <= colCount; i++) {
-                    row.put(meta.getColumnName(i), convertValueForJson(rs.getObject(i)));
-                }
-                rows.add(row);
-            }
-            return new TableDataResult(rows, columns);
-        });
+        return executeQueryWithColumns(conn, sql, tableName);
     }
 
     /**
-     * 查询全表数据，同时返回列元数据
+     * 查询全表数据，同时返回列元数据（含字段注释）
      */
     public TableDataResult queryTableWithColumns(DbConnection conn, String tableName) {
         String sql = "SELECT * FROM " + safeTableName(conn,tableName);
-        return executeQuery(conn, sql, rs -> {
-            List<Map<String, Object>> rows = new ArrayList<>();
-            ResultSetMetaData meta = rs.getMetaData();
-            List<Map<String, String>> columns = extractColumnMetadata(meta);
-            int colCount = meta.getColumnCount();
-            while (rs.next()) {
-                Map<String, Object> row = new LinkedHashMap<>();
-                for (int i = 1; i <= colCount; i++) {
-                    row.put(meta.getColumnName(i), convertValueForJson(rs.getObject(i)));
+        return executeQueryWithColumns(conn, sql, tableName);
+    }
+
+    /**
+     * 执行查询并返回带注释的列元数据 + 数据行
+     */
+    private TableDataResult executeQueryWithColumns(DbConnection conn, String sql, String tableName) {
+        String url = buildJdbcUrl(conn);
+        String driver = getDriverClass(conn.getDbType());
+        try {
+            Class.forName(driver);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("找不到数据库驱动: " + driver, e);
+        }
+        try (Connection c = DriverManager.getConnection(url, conn.getUsername(), conn.getPassword())) {
+            // 1. 获取字段注释
+            Map<String, String> commentMap = new LinkedHashMap<>();
+            try {
+                String catalog = c.getCatalog();
+                String schema = conn.getSchemaName();
+                if (schema == null || schema.isEmpty()) schema = conn.getUsername();
+                if ("Dameng".equalsIgnoreCase(conn.getDbType())) {
+                    schema = conn.getSchemaName();
                 }
-                rows.add(row);
+                DatabaseMetaData dbMeta = c.getMetaData();
+                try (ResultSet colRs = dbMeta.getColumns(catalog, schema, tableName, "%")) {
+                    while (colRs.next()) {
+                        String colName = colRs.getString("COLUMN_NAME");
+                        String remarks = colRs.getString("REMARKS");
+                        if (remarks != null && !remarks.isEmpty()) {
+                            commentMap.put(colName, remarks);
+                        }
+                    }
+                }
+            } catch (SQLException e) {
+                log.warn("获取列注释失败: {}", e.getMessage());
             }
-            return new TableDataResult(rows, columns);
-        });
+
+            // 2. 查询数据
+            try (Statement stmt = c.createStatement();
+                 ResultSet rs = stmt.executeQuery(sql)) {
+                List<Map<String, Object>> rows = new ArrayList<>();
+                ResultSetMetaData meta = rs.getMetaData();
+                int colCount = meta.getColumnCount();
+
+                List<Map<String, String>> columns = new ArrayList<>();
+                for (int i = 1; i <= colCount; i++) {
+                    Map<String, String> col = new LinkedHashMap<>();
+                    col.put("name", meta.getColumnName(i));
+                    String sqlType = meta.getColumnTypeName(i);
+                    col.put("type", mapSqlTypeToFrontendType(sqlType));
+                    col.put("sqlType", sqlType != null ? sqlType : "UNKNOWN");
+                    col.put("comment", commentMap.getOrDefault(meta.getColumnName(i), ""));
+                    columns.add(col);
+                }
+
+                while (rs.next()) {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    for (int i = 1; i <= colCount; i++) {
+                        row.put(meta.getColumnName(i), convertValueForJson(rs.getObject(i)));
+                    }
+                    rows.add(row);
+                }
+                return new TableDataResult(rows, columns);
+            }
+        } catch (SQLException e) {
+            log.error("数据库查询失败: {}", e.getMessage());
+            throw new RuntimeException("数据库查询失败: " + e.getMessage(), e);
+        }
     }
 
     /**

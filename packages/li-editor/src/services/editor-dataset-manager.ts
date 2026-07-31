@@ -113,9 +113,15 @@ export class EditorDataset {
       this.geoFields = getGeoFields(this.columns, this.data);
     } else if (isRemoteDatasetSchema(schema)) {
       this.data = [];
-      this.columns = [];
-      this.fieldPairs = [];
-      this.geoFields = [];
+      // 保留 schema 中的 columns（含 displayName 即数据库字段注释），
+      // 后续 updateData 会用 getDatasetColumns 更新但保留 displayName
+      this.columns = schema.columns || [];
+      this.fieldPairs = getPointFieldPairs(this.columns);
+      this.geoFields = getGeoFields(this.columns, []);
+      console.log('[EditorDataset.setSchema] remote columns with displayName:', this.columns.filter((c: any) => c.displayName).map((c: any) => `${c.name}→${c.displayName}`));
+      if (this.columns.some((c: any) => c.displayName)) {
+        console.log('[EditorDataset.setSchema] ✅ displayName found on columns, will be used for labels');
+      }
 
       if (this.queryObserver) {
         this.queryObserver.setOptions(this.getQueryOptions(schema));
@@ -165,10 +171,28 @@ export class EditorDataset {
 
   public updateData(data: Record<string, any>[]) {
     this.data = data;
-    this.columns = getDatasetColumns(data);
+    // 空数据时不更新列，避免清除已有的 displayName（字段注释）
+    if (!data.length) return this;
+    // 保留已有的 type 和 displayName（如数据库返回的准确类型和字段注释），避免刷新后丢失
+    const newColumns = getDatasetColumns(data);
+    const oldColMap = new Map<string, DatasetField>();
+    for (const c of this.columns) { oldColMap.set(c.name, c); }
+    const oldDisplayNameCount = this.columns.filter((c: any) => c.displayName).length;
+    console.log('[EditorDataset.updateData] called, dataLen:', data.length, 'oldCols:', this.columns.length, 'oldDisplayNames:', oldDisplayNameCount);
+    for (const c of newColumns) {
+      const old = oldColMap.get(c.name);
+      if (old) {
+        if (old.type) c.type = old.type;
+        if (old.displayName) { c.displayName = old.displayName; console.log('[EditorDataset.updateData] preserved displayName:', c.name, '→', old.displayName); }
+      }
+    }
+    const displayNameCols = newColumns.filter((c: any) => c.displayName);
+    if (displayNameCols.length > 0) {
+      console.log('[EditorDataset.updateData] ✅ columns with displayName after updateData:', displayNameCols.map((c: any) => `${c.name}→${c.displayName}`));
+    }
+    this.columns = newColumns;
     this.fieldPairs = getPointFieldPairs(this.columns);
     this.geoFields = getGeoFields(this.columns, this.data);
-
     return this;
   }
 
@@ -196,8 +220,8 @@ export class EditorDataset {
     const service = datasetService.service;
     const filterWithMeta = filter && getValidFilterWithMeta(filter, columns);
 
-    // 读取刷新周期（分钟），>0 则启用自动刷新
-    const refreshIntervalMin = (metadata as any)?.refreshInterval || 0;
+    // 读取刷新周期（秒），>0 则启用自动轮询刷新
+    const refreshIntervalSec = (metadata as any)?.refreshInterval || 0;
 
     const options: QueryObserverOptions = {
       queryKey: [serviceName, filterWithMeta, properties],
@@ -205,13 +229,12 @@ export class EditorDataset {
         const serviceParams: DatasetServiceParams = { filter: filterWithMeta, properties, signal: context.signal };
         return service(serviceParams);
       },
-      // 数据刷新：staleTime 决定何时数据变"陈旧"
-      staleTime: refreshIntervalMin > 0 ? refreshIntervalMin * 60 * 1000 : Infinity,
+      staleTime: refreshIntervalSec > 0 ? (refreshIntervalSec / 2) * 1000 : Infinity,
     };
 
-    // 如果有配置刷新周期，使用 refetchInterval 自动轮询
-    if (refreshIntervalMin > 0) {
-      (options as any).refetchInterval = refreshIntervalMin * 60 * 1000;
+    // refetchInterval 自动轮询（秒→毫秒）
+    if (refreshIntervalSec > 0) {
+      (options as any).refetchInterval = refreshIntervalSec * 1000;
     }
 
     return options;

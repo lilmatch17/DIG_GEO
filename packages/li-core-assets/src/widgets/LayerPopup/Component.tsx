@@ -34,6 +34,7 @@ const LILayerPopup: React.FC<LILayerPopupProps> = (props) => {
             return (
               <>
                 {newFields.map((_item: ILayerField, index) => {
+                  // formatField 已在 registerForm 的 fromValues 中自动填入数据库字段注释
                   const field = _item.formatField ? `${_item.formatField}:` : `${_item.field}:`;
                   const rawValue = feature[_item.field];
                   const value =

@@ -18,12 +18,12 @@ public class DatasetColumnRepository {
     private JdbcTemplate jdbcTemplate;
 
     public List<DatasetColumn> findByDatasetId(String datasetId) {
-        String sql = "SELECT COLUMN_ID, DATASET_ID, COLUMN_NAME, COLUMN_TYPE, COLUMN_INDEX FROM DIG_GEO.DATASET_COLUMNS WHERE DATASET_ID = ? ORDER BY COLUMN_INDEX";
+        String sql = "SELECT COLUMN_ID, DATASET_ID, COLUMN_NAME, COLUMN_TYPE, COLUMN_INDEX, COLUMN_COMMENT FROM DIG_GEO.DATASET_COLUMNS WHERE DATASET_ID = ? ORDER BY COLUMN_INDEX";
         return jdbcTemplate.query(sql, new Object[]{datasetId}, new DatasetColumnRowMapper());
     }
 
     public void batchInsert(String datasetId, List<DatasetColumn> columns) {
-        String sql = "INSERT INTO DIG_GEO.DATASET_COLUMNS (COLUMN_ID, DATASET_ID, COLUMN_NAME, COLUMN_TYPE, COLUMN_INDEX) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO DIG_GEO.DATASET_COLUMNS (COLUMN_ID, DATASET_ID, COLUMN_NAME, COLUMN_TYPE, COLUMN_INDEX, COLUMN_COMMENT) VALUES (?, ?, ?, ?, ?, ?)";
         jdbcTemplate.batchUpdate(sql, columns, columns.size(), (ps, column) -> {
             if (column.getColumnId() == null) {
                 column.setColumnId(UUID.randomUUID().toString());
@@ -34,6 +34,7 @@ public class DatasetColumnRepository {
             ps.setString(3, column.getColumnName());
             ps.setString(4, column.getColumnType());
             ps.setInt(5, column.getColumnIndex() != null ? column.getColumnIndex() : 0);
+            ps.setString(6, column.getColumnComment());
         });
     }
 
@@ -51,6 +52,7 @@ public class DatasetColumnRepository {
             column.setColumnName(rs.getString("COLUMN_NAME"));
             column.setColumnType(rs.getString("COLUMN_TYPE"));
             column.setColumnIndex(rs.getInt("COLUMN_INDEX"));
+            column.setColumnComment(rs.getString("COLUMN_COMMENT"));
             return column;
         }
     }

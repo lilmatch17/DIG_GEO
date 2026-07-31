@@ -79,6 +79,7 @@ public class DatasetService {
                 column.setColumnName(colDef.getName());
                 column.setColumnType(colDef.getType());
                 column.setColumnIndex(colDef.getIndex() != null ? colDef.getIndex() : i);
+                column.setColumnComment(colDef.getComment());
                 columns.add(column);
             }
             datasetColumnRepository.batchInsert(dataset.getDatasetId(), columns);
@@ -126,6 +127,7 @@ public class DatasetService {
             def.setName(col.getColumnName());
             def.setType(col.getColumnType());
             def.setIndex(col.getColumnIndex());
+            def.setComment(col.getColumnComment());
             columnDefs.add(def);
         }
 

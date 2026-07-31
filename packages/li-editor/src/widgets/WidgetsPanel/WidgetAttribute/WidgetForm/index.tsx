@@ -1,7 +1,7 @@
 import type { ImplementWidget, WidgetRegisterFormProps } from '@antv/li-sdk';
 import { Form } from '@formily/antd-v5';
 import type { Form as FormInstance } from '@formily/core';
-import { createForm, onFormValuesChange } from '@formily/core';
+import { createForm, onFieldValueChange, onFormValuesChange } from '@formily/core';
 import { useMemoizedFn } from 'ahooks';
 import classNames from 'classnames';
 import { debounce } from 'lodash-es';
@@ -28,16 +28,11 @@ const WidgetForm: React.FC<WidgetFormProps> = (props) => {
     return result;
   }, [registerForm, registerFormProps]);
 
-  const handleFormValuesChange = useMemoizedFn((formInstance: FormInstance<any>) => {
-    formInstance
-      .submit<Record<string, any>>()
-      .then((values) => {
-        const result = registerFormData.fromValues ? registerFormData.fromValues(values) : values;
-        onChange(result);
-      })
-      .catch((values) => {
-        // console.log('submit rejected', values);
-      });
+  const handleFormValuesChange = useMemoizedFn((formIns: FormInstance<any>) => {
+    const values = formIns.values;
+    console.log('[WidgetForm] save triggered, keys:', Object.keys(values), 'defaultFilters:', JSON.stringify(values.defaultFilters)?.substring(0, 200));
+    const result = registerFormData.fromValues ? registerFormData.fromValues(values) : values;
+    onChange(result);
   });
 
   const schema = useMemo(() => {
@@ -53,8 +48,10 @@ const WidgetForm: React.FC<WidgetFormProps> = (props) => {
     const form = createForm({
       initialValues: _initialValues,
       effects() {
-        // 数据实时变化
-        onFormValuesChange(debounce(handleFormValuesChange, 150));
+        // 即时保存（无 debounce），避免复杂组件（如 FilterConfiguration）修改后丢失
+        onFormValuesChange((formIns: FormInstance<any>) => {
+          handleFormValuesChange(formIns);
+        });
       },
     });
 

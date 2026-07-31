@@ -92,7 +92,7 @@ export default function UploadDataset(props: UploadDatasetProps) {
   return (
     <>
       <div className={prefixCls}>
-        <p className={classNames(`${prefixCls}__description`, styles.uploadDescription)}>
+        {/* <p className={classNames(`${prefixCls}__description`, styles.uploadDescription)}>
           支持的文件格式有{' '}
           <a href="https://www.yuque.com/antv/l7vp/data-format-csv" target="_blank" rel="noreferrer">
             CSV
@@ -120,6 +120,9 @@ export default function UploadDataset(props: UploadDatasetProps) {
             使用文档
           </a>
           。
+        </p> */}
+        <p className={classNames(`${prefixCls}__description`, styles.uploadDescription)}>
+          支持的文件格式有 CSV、Excel、JSON、GeoJSON、Shapefile。
         </p>
         <div className={classNames(`${prefixCls}__content`, styles.uploadContent)}>
           <div className={classNames(`${prefixCls}-dataset`, styles.uploadDataset)}>
