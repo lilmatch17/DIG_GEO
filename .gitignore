@@ -34,4 +34,4 @@ master/
 java-server/target/
 deploy/
 node_modules/
-
+*.iml
