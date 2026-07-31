@@ -11,9 +11,10 @@ export default function DatabaseDataset(props: Props) {
   const { appService } = useEditorService();
   const [form] = Form.useForm();
   const [connections, setConnections] = useState<any[]>([]);
-  const [tables, setTables] = useState<string[]>([]);
+  const [tables, setTables] = useState<Array<{ name: string; comment?: string }>>([]);
   const [loadingTables, setLoadingTables] = useState(false);
   const [previewData, setPreviewData] = useState<any[] | null>(null);
+  const [previewColumns, setPreviewColumns] = useState<any[]>([]);
   const [rowCount, setRowCount] = useState(0);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -36,12 +37,22 @@ export default function DatabaseDataset(props: Props) {
     selectedConnRef.current = connId;
     setTables([]);
     setPreviewData(null);
+    setPreviewColumns([]);
     setRowCount(0);
     if (!connId) return;
     setLoadingTables(true);
     fetch(`/api/db-connections/${connId}/tables`)
       .then(r => r.json())
-      .then(data => setTables(Array.isArray(data) ? data : []))
+      .then(data => {
+        // 兼容旧格式 (string[]) 和新格式 ([{name, comment}])
+        let tableList: Array<{ name: string; comment?: string }> = [];
+        if (Array.isArray(data)) {
+          tableList = data.map((item: any) =>
+            typeof item === 'string' ? { name: item, comment: '' } : { name: item.name, comment: item.comment || '' }
+          );
+        }
+        setTables(tableList);
+      })
       .catch(() => setTables([]))
       .finally(() => setLoadingTables(false));
   }, []);
@@ -61,6 +72,7 @@ export default function DatabaseDataset(props: Props) {
       }
       const data = await res.json();
       setPreviewData(data.rows || []);
+      setPreviewColumns(data.columns || []);
       setRowCount(data.rowCount || 0);
     } catch (err: any) {
       message.error('预览请求失败: ' + (err.message || '网络错误'));
@@ -77,26 +89,25 @@ export default function DatabaseDataset(props: Props) {
     try { await form.validateFields(); } catch { return; }
 
     const values = form.getFieldsValue();
-    if (rowCount > 20000) {
-      Modal.warning({
-        title: '数据量超限',
-        content: `该表有 ${rowCount.toLocaleString()} 行数据，超过 2 万行限制，无法创建数据集。`,
-      });
-      return;
-    }
-
     setSubmitting(true);
     try {
       const datasetId = getUniqueId();
+      // 将后端返回的列元数据（含注释）转为 DatasetField[] 格式
+      const columns = previewColumns.map((col: any) => ({
+        name: col.name,
+        type: col.type || 'string',
+        displayName: col.comment || '',
+      }));
       const dataset = {
         id: datasetId,
         type: 'remote' as const,
-        metadata: { name: values.name, refreshInterval: values.refreshInterval ?? 10 },
+        metadata: { name: values.name, refreshInterval: 0 },
         serviceType: implementDatasetService.metadata.name,
         properties: {
           connectionId: values.connectionId,
           tableName: values.tableName,
         },
+        columns,
       };
       onSubmit([dataset]);
     } finally {
@@ -129,23 +140,23 @@ export default function DatabaseDataset(props: Props) {
               loading={loadingTables}
               showSearch
               filterOption={(input, option) => (option?.label as string || '').toLowerCase().includes(input.toLowerCase())}
-              options={tables.map(t => ({ value: t, label: t }))}
+              options={tables.map(t => ({
+                value: t.name,
+                label: t.comment ? `${t.name}（${t.comment}）` : t.name,
+              }))}
               onChange={(val) => { selectedTableRef.current = val; }}
             />
           </Form.Item>
-          <Form.Item label=" ">
+          <div style={{ marginBottom: 16 }}>
             <Button onClick={handlePreview} loading={previewLoading} type="default">
               预览数据
             </Button>
             {rowCount > 0 && (
-              <span style={{ marginLeft: 12, color: rowCount > 20000 ? 'red' : 'green' }}>
-                共 {rowCount.toLocaleString()} 行{rowCount > 20000 ? ' (超过2万行限制!)' : ''}
+              <span style={{ marginLeft: 12, color: '#52c41a' }}>
+                共 {rowCount.toLocaleString()} 行
               </span>
             )}
-          </Form.Item>
-          <Form.Item name="refreshInterval" label="刷新周期" extra="0=不自动刷新">
-            <InputNumber min={0} max={1440} placeholder="10" addonAfter="分钟" style={{ width: 200 }} />
-          </Form.Item>
+          </div>
         </Form>
         {previewData && previewData.length > 0 && (
           <Table

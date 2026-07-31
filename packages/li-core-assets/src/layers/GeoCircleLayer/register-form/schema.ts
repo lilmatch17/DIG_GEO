@@ -2,6 +2,9 @@ import type { FieldSelectOptionType } from '@antv/li-p2';
 import getCoordinateSchema from './coordinate-schema';
 
 export default (fieldList: FieldSelectOptionType[]) => {
+  const numberFields = fieldList.filter((f) => f.type === 'number');
+  console.log('[GeoCircleLayer.schema] fieldList len:', fieldList.length, 'with label≠name:', fieldList.filter((f: any) => f.label !== f.value).length, 'samples:', fieldList.filter((f: any) => f.label !== f.value).slice(0, 3).map((f: any) => `${f.value}→${f.label}`));
+
   return {
     ...getCoordinateSchema(fieldList),
 
@@ -21,18 +24,35 @@ export default (fieldList: FieldSelectOptionType[]) => {
             header: '样式',
           },
           properties: {
-            radiusValue: {
-              type: 'number',
-              title: '填充半径',
+            outerRadiusField: {
+              type: 'string',
+              title: '外圈半径',
               required: true,
-              default: 1000,
               'x-decorator': 'FormItem',
-              'x-component': 'NumberPicker',
-              'x-component-props': {
-                min: 1,
-                max: 100000,
-                placeholder: '请输入半径值',
+              'x-component': 'FieldSelect',
+              'x-decorator-props': {
+                tooltip: '数据中包含外圈半径（物理长度）的数值字段',
               },
+              'x-component-props': {
+                allowClear: true,
+                placeholder: '请选择字段',
+              },
+              enum: [...numberFields],
+            },
+
+            innerRadiusField: {
+              type: 'string',
+              title: '内圈半径',
+              'x-decorator': 'FormItem',
+              'x-component': 'FieldSelect',
+              'x-decorator-props': {
+                tooltip: '可选：数据中包含内圈半径的数值字段。填写后绘制环形（外圈-内圈）',
+              },
+              'x-component-props': {
+                allowClear: true,
+                placeholder: '不填则为实心圆',
+              },
+              enum: [...numberFields],
             },
 
             radiusUnit: {
@@ -88,6 +108,29 @@ export default (fieldList: FieldSelectOptionType[]) => {
                 min: 0,
                 max: 10,
                 step: 0.5,
+              },
+            },
+
+            lineType: {
+              type: 'string',
+              title: '描边线型',
+              default: 'solid',
+              'x-decorator': 'FormItem',
+              'x-component': 'Select',
+              enum: [
+                { label: '实线', value: 'solid' },
+                { label: '虚线', value: 'dash' },
+              ],
+            },
+
+            clipChina: {
+              type: 'boolean',
+              title: '裁剪国内',
+              default: false,
+              'x-decorator': 'FormItem',
+              'x-component': 'Switch',
+              'x-decorator-props': {
+                tooltip: '开启后地理圆将减去中国大陆+海南岛陆地区域（不含台湾）',
               },
             },
           },

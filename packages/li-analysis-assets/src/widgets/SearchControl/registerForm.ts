@@ -40,10 +40,13 @@ export default (props: WidgetRegisterFormProps): WidgetRegisterForm<Properties> 
     for (const col of (ds.columns || [])) {
       if ((col.type === 'string') && !seen.has(col.name)) {
         seen.add(col.name);
-        fieldOptions.push({ label: col.name, value: col.name });
+        const label = (col as any).displayName ? `${col.name}（${(col as any).displayName}）` : col.name;
+        fieldOptions.push({ label, value: col.name });
       }
     }
   }
+  console.log('[SearchControl.registerForm] fieldOptions with comment:', fieldOptions.filter((f: any) => f.label !== f.value).length,
+    'samples:', fieldOptions.filter((f: any) => f.label !== f.value).slice(0, 3).map((f: any) => `${f.value}→${f.label}`));
 
   const schema = {
     label: {

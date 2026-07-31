@@ -9,4 +9,5 @@ public class DatasetColumn {
     private String columnName;
     private String columnType;
     private Integer columnIndex;
+    private String columnComment;
 }

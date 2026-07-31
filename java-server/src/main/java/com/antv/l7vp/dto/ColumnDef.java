@@ -7,4 +7,5 @@ public class ColumnDef {
     private String name;
     private String type;
     private Integer index;
+    private String comment;
 }

@@ -39,14 +39,8 @@ export default (props: WidgetRegisterFormProps): WidgetRegisterForm<Properties> 
             },
           },
         },
-        {
-          dependencies: ['datasetId'],
-          fulfill: {
-            run: `$form.setFieldState('defaultFilters',state=>{
-                state.value = [];
-              })`,
-          },
-        },
+        // 注意：不再自动清空 defaultFilters，避免初始加载时误清除已保存的筛选条件
+        // 切换数据集后如需清空筛选条件，由用户手动操作
       ],
     },
 

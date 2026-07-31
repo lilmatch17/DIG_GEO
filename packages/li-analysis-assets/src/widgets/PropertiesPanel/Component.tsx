@@ -19,9 +19,25 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ items = [], isOpen })
   const styles = useStyle();
   const [collapsed, setCollapsed] = useState(0);
   const [title, setTitle] = useState<string>();
+  const [activeDatasetId, setActiveDatasetId] = useState<string>('');
   const layerList = useLayerList();
   const [datasetList] = useDatasetList();
   const activeFeatureIdRef = useRef<string>();
+
+  // 构建当前数据集字段名 → 注释 的映射，同时记录已知列名集合
+  const { displayNameMap, knownColumns } = useMemo(() => {
+    const nameMap: Record<string, string> = {};
+    const colSet = new Set<string>();
+    if (activeDatasetId) {
+      const ds = datasetList.find((item) => item.id === activeDatasetId);
+      const columns = (ds as any)?.columns || [];
+      columns.forEach((col: any) => {
+        colSet.add(col.name);
+        if (col.displayName) nameMap[col.name] = col.displayName;
+      });
+    }
+    return { displayNameMap: nameMap, knownColumns: colSet };
+  }, [activeDatasetId, datasetList]);
 
   const formatLayerList = useMemo(() => {
     const list = items
@@ -36,6 +52,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ items = [], isOpen })
       setTitle(datasetName?.metadata.name || layerName);
       setCollapsed(300);
       setFeature(event.feature || {});
+      setActiveDatasetId(datasetId);
     };
     // 事件代理列表，为保证取消绑定事件是同一个函数引用地址
     const onLayerClickList: ((event: any) => void)[] = [];
@@ -108,10 +125,20 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ items = [], isOpen })
               />
             </div>
             <Row style={{ padding: 14 }} className={cls(`${CLS_PREFIX}__content`, styles.panelContent)}>
-              {Object.keys(feature).map((key) => {
+              {Object.keys(feature)
+                .filter((key, i, arr) => {
+                  // 有列元数据：只显示已知列（自动过滤系统生成的 id/coordinates）
+                  if (knownColumns.size > 0) return knownColumns.has(key);
+                  // 无列元数据：系统生成的 id/coordinates 位于最后，按位置和名称过滤
+                  const last = i >= arr.length - 2;
+                  if (last && (key === 'coordinates' || key.toLowerCase().includes('id'))) return false;
+                  return true;
+                })
+                .map((key) => {
+                  const label = displayNameMap[key] || key;
                 return (
                   <Col span={24} key={key} style={{ marginBottom: 10 }}>
-                    <Text className={cls(`${CLS_PREFIX}__header__label`, styles.panelHeaderLabel)}>{key}:</Text>
+                    <Text className={cls(`${CLS_PREFIX}__header__label`, styles.panelHeaderLabel)}>{label}:</Text>
                     {getContent(feature[key])}
                   </Col>
                 );

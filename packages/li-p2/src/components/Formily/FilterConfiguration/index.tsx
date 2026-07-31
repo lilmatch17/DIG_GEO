@@ -41,8 +41,10 @@ const Internal: React.FC<FilterConfigurationProps> = (props) => {
 
   // 获取所有数据变更信息
   const onfiltersChange = (val: FilterConfigType[]) => {
+    console.log('[FilterConfiguration] onfiltersChange, len:', val.length, JSON.stringify(val).substring(0, 300));
     if (onChange) {
       onChange(val);
+      console.log('[FilterConfiguration] onChange called');
     }
 
     setFilterList(val);

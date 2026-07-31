@@ -11,6 +11,10 @@ import type { FieldSelectOptionType } from './types';
 const InternalSelect: React.FC<SelectProps<string | string[], FieldSelectOptionType>> = (props) => {
   const { options, open: outerOpen = false, ...prop } = props;
   const prefixCls = usePrefixCls('formily-field-select');
+  // debug: 检查 options 是否带有 displayName/comment label
+  if (options && options.length > 0 && (options[0] as any).label !== (options[0] as any).value) {
+    console.log('[FieldSelect] options with label≠value, count:', options.filter((o: any) => o.label !== o.value).length, 'samples:', options.filter((o: any) => o.label !== o.value).slice(0, 3).map((o: any) => `${o.value}→${o.label}`));
+  }
   const [wrapSSR, hashId] = useStyle(prefixCls);
   const [internalOpen, setInternalOpen] = useState(outerOpen);
   // Select 是否多选

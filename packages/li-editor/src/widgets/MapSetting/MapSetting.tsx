@@ -26,7 +26,7 @@ const MapSetting: React.FC<MapSettingProps> = (props) => {
 
   return (
     <>
-      <Tooltip placement="right" title="地图初始位置配置">
+      <Tooltip placement="right" title="初始视野配置">
         <Button
           onClick={showModal}
           type="text"

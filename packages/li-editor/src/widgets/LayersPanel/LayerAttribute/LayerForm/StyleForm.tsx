@@ -112,6 +112,7 @@ const StyleForm: React.FC<StyleFormProps> = (props) => {
 
   return (
     <Form
+      key={`${Object.keys(schema.properties || {}).length}_${datasetFields.length}`}
       form={styleForm}
       labelCol={8}
       wrapperCol={16}
