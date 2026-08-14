@@ -6,7 +6,7 @@
   "author": "https://github.com/orgs/antvis/people",
   "homepage": "https://li.antv.antgroup.com",
   "scripts": {
-    "dev": "umi dev",
+    "dev": "cross-env NODE_OPTIONS=--max-old-space-size=4096 umi dev",
     "build": "umi build",
     "build:analyze": "ANALYZE=1 npm run build",
     "postinstall": "umi setup",

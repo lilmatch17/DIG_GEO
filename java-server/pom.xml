@@ -43,7 +43,14 @@
             <artifactId>DmJdbcDriver18</artifactId>
             <version>8.1.1.128</version>
             <scope>system</scope>
-            <systemPath>F:\dmdbms\drivers\jdbc\DmJdbcDriver18.jar</systemPath>
+            <systemPath>D:\project\dituruanjiancankaocailiao\DmJdbcDriver18.jar</systemPath>
+        </dependency>
+
+        <!-- MySQL / Doris JDBC 驱动（Doris 走 MySQL 协议，提供 com.mysql.cj.jdbc.Driver） -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.33</version>
         </dependency>
 
         <!-- JSON处理 -->

@@ -7,15 +7,14 @@ import {
   Folder,
   LayersPanel,
   MapSetting,
-  TilesetsDataset,
   UploadDataset,
   WidgetsPanel,
   ZhongtaiApiDataset,
+  ZhongtaiTableDataset,
 } from '@antv/li-editor/dist/esm/widgets';
 
 import BackToProjects from './widgets/BackToProjects';
 import DatasetPreview from './widgets/DatasetPreview';
-import Docs from './widgets/Docs';
 import Export from './widgets/Export';
 import Screenshot from './widgets/Screenshot';
 import Share from './widgets/Share';
@@ -34,6 +33,7 @@ export const editorWidgets: ImplementEditorWidget[] = [DatasetPreview, Export];
 export const editorWidgetsWithBuilder: ImplementEditorWidget[] = [
   DatasetPreview,
   ZhongtaiApiDataset,
+  ZhongtaiTableDataset,
   DatabaseDataset,
   UploadDataset,
   Folder,
