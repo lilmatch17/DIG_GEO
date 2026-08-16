@@ -179,23 +179,32 @@ public class ZhongtaiApiService {
      * 获取中台数据资源列表（数据表/API）
      * POST daasMeta/dataResource/list
      *
-     * @param scopeType   User / Space
-     * @param spaceId     空间ID
-     * @param userSession 用户 Session
+     * @param scopeType    User / Space
+     * @param spaceId      空间ID
+     * @param pageIndex    页码（从 1 开始，null 用 1）
+     * @param pageSize     每页条数（null 用 20）
+     * @param searchText   关键字搜索（表名/注释，可为 null）
+     * @param dataSourceId 库的 dataSourceId（按库过滤，可为 null 表示不过滤）
+     * @param userSession  用户 Session
      * @return 数据资源列表 JSON
      */
     @SuppressWarnings("unchecked")
     public Map<String, Object> fetchDataResourceList(String scopeType, String spaceId,
+                                                     Integer pageIndex, Integer pageSize,
+                                                     String searchText, String dataSourceId,
                                                      UserSession userSession) {
         String url = config.getResourceListUrl();
+
+        int pIndex = (pageIndex != null && pageIndex > 0) ? pageIndex : 1;
+        int pSize = (pageSize != null && pageSize > 0) ? pageSize : 20;
 
         // 构建请求体
         Map<String, Object> extMap = new LinkedHashMap<>();
         extMap.put("rdbResourceListType", "manageDevelopmentList");
 
         Map<String, Object> pageParam = new LinkedHashMap<>();
-        pageParam.put("pageIndex", 1);
-        pageParam.put("limit", 200);
+        pageParam.put("pageIndex", pIndex);
+        pageParam.put("limit", pSize);
         pageParam.put("sortField", "lastUpdateTime");
         pageParam.put("sortType", "desc");
 
@@ -211,11 +220,24 @@ public class ZhongtaiApiService {
         requestBody.put("publishStatus", "unpublished");
         requestBody.put("extMap", extMap);
 
+        // 按库过滤（dataSourceId 数组，配合 dsId）。中台表清单接口用 dataSourceId 区分库
+        if (dataSourceId != null && !dataSourceId.trim().isEmpty()) {
+            String dsId = dataSourceId.trim();
+            requestBody.put("dataSourceId", Collections.singletonList(dsId));
+            requestBody.put("dsId", dsId);
+        }
+
+        // 关键字搜索（表名/注释）
+        if (searchText != null && !searchText.trim().isEmpty()) {
+            requestBody.put("searchText", searchText.trim());
+        }
+
         HttpHeaders headers = buildHeaders(userSession, scopeType, spaceId);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
-        log.info("获取中台数据资源列表: {} (scopeType={}, spaceId={}, user={})",
-                url, headers.get("scopeType"), effectiveSpaceId, userSession.getUsername());
+        log.info("获取中台数据资源列表: {} (scopeType={}, spaceId={}, dataSourceId={}, page={}/{}, search={}, user={})",
+                url, headers.get("scopeType"), effectiveSpaceId, dataSourceId, pIndex, pSize,
+                searchText, userSession.getUsername());
 
         try {
             ResponseEntity<String> response = restTemplate.exchange(
@@ -229,6 +251,67 @@ public class ZhongtaiApiService {
         } catch (Exception e) {
             log.error("获取中台数据资源列表异常", e);
             throw new RuntimeException("获取中台数据资源列表失败: " + e.getMessage(), e);
+        }
+    }
+
+    // ==================== 库列表（应用下的库/实例） ====================
+
+    /**
+     * 获取中台应用下的「库列表」（Doris 多库 / 其它引擎库）
+     * POST daasECS/unit/instance/list 传 appId
+     *
+     * @param appId       应用ID（为空时用配置 zhongtai.api.app-id）
+     * @param scopeType   User / Space
+     * @param spaceId     空间ID
+     * @param userSession 用户 Session
+     * @return 库/实例列表 JSON（details.data 内为 instanceId/instanceName/dbname 等）
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> fetchDatabaseList(String appId, String scopeType, String spaceId,
+                                                 UserSession userSession) {
+        String url = config.getUnitInstanceUrl();
+
+        String effectiveAppId = (appId != null && !appId.trim().isEmpty())
+                ? appId.trim() : config.getAppId();
+        if (effectiveAppId == null || effectiveAppId.isEmpty()) {
+            throw new RuntimeException("未配置中台应用ID (zhongtai.api.app-id)");
+        }
+
+        Map<String, Object> pageParam = new LinkedHashMap<>();
+        pageParam.put("pageIndex", 1);
+        pageParam.put("limit", 200);
+        pageParam.put("sortField", "lastUpdateTime");
+        pageParam.put("sortType", "desc");
+
+        Map<String, Object> requestBody = new LinkedHashMap<>();
+        requestBody.put("appId", effectiveAppId);
+        requestBody.put("accountId", null);
+        requestBody.put("pageParam", pageParam);
+        requestBody.put("instanceType", "");
+        requestBody.put("storageType", null);
+        requestBody.put("withMetrics", true);
+        requestBody.put("withBehaviors", true);
+        requestBody.put("withStatisticsInfo", true);
+
+        HttpHeaders headers = buildHeaders(userSession, scopeType, spaceId);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        log.info("获取中台库列表: {} (appId={}, scopeType={}, spaceId={}, user={})",
+                url, effectiveAppId, headers.get("scopeType"), headers.get("spaceId"),
+                userSession.getUsername());
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    url, HttpMethod.POST, entity, String.class);
+            String respBody = response.getBody();
+            log.info("中台库列表返回长度: {}", respBody != null ? respBody.length() : 0);
+            return objectMapper.readValue(respBody, Map.class);
+        } catch (HttpClientErrorException e) {
+            log.error("获取中台库列表失败: HTTP {} {}", e.getStatusCode(), e.getMessage());
+            throw new RuntimeException("获取中台库列表失败: " + e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("获取中台库列表异常", e);
+            throw new RuntimeException("获取中台库列表失败: " + e.getMessage(), e);
         }
     }
 

@@ -49,6 +49,9 @@ public class ZhongtaiConfig {
     @Value("${zhongtai.api.api-resource-list-url}")
     private String apiResourceListUrl;
 
+    @Value("${zhongtai.api.app-id:}")
+    private String appId;
+
     // ============ 中台 API 调用默认参数 ============
 
     @Value("${zhongtai.api.space-id:default}")
@@ -82,6 +85,7 @@ public class ZhongtaiConfig {
     public String getUnitInstanceUrl() { return unitInstanceUrl; }
     public String getConnectInfoUrl() { return connectInfoUrl; }
     public String getApiResourceListUrl() { return apiResourceListUrl; }
+    public String getAppId() { return appId; }
     public int getSessionMaxInactiveInterval() { return sessionMaxInactiveInterval; }
 
     // ============ 衍生方法 ============

@@ -171,6 +171,91 @@ public class ZhongtaiApiController {
         }
     }
 
+    // ==================== 中台库列表 ====================
+
+    /**
+     * 获取中台应用下的「库列表」
+     * POST /api/zhongtai/databases/list
+     * Body: { scopeType?, spaceId?, appId? }
+     */
+    @PostMapping("/zhongtai/databases/list")
+    public ResponseEntity<?> listDatabases(@RequestBody Map<String, Object> body,
+                                           HttpServletRequest request) {
+        UserSession userSession = AuthController.getSession(request);
+        if (userSession == null || userSession.isExpired()) {
+            Map<String, Object> error = new LinkedHashMap<>();
+            error.put("error", "未登录或登录已过期");
+            return ResponseEntity.status(401).body(error);
+        }
+
+        try {
+            String scopeType = (String) body.getOrDefault("scopeType", "User");
+            String spaceId = (String) body.get("spaceId");
+            String appId = (String) body.get("appId");
+
+            log.info("用户 {} 请求中台库列表 (scopeType={}, spaceId={}, appId={})",
+                    userSession.getUsername(), scopeType, spaceId, appId);
+
+            Map<String, Object> response = zhongtaiApiService.fetchDatabaseList(
+                    appId, scopeType, spaceId, userSession);
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> details = (Map<String, Object>) response.get("details");
+            List<Map<String, Object>> rawList = new ArrayList<>();
+            if (details != null) {
+                Object data = details.get("data");
+                if (data instanceof List) {
+                    @SuppressWarnings("unchecked")
+                    List<Map<String, Object>> d = (List<Map<String, Object>>) data;
+                    rawList = d;
+                }
+            }
+
+            List<Map<String, Object>> databases = new ArrayList<>();
+            for (Map<String, Object> item : rawList) {
+                Map<String, Object> db = new LinkedHashMap<>();
+                db.put("instanceId", item.get("instanceId"));
+                db.put("instanceName", item.get("instanceName"));
+                db.put("instanceDisplayName", item.get("instanceDisplayName"));
+                db.put("instanceCode", item.get("instanceCode"));
+                db.put("storageLayer", item.get("storageLayer"));
+                db.put("storageLayerName", item.get("storageLayerName"));
+                db.put("dbname", extractDbname(item));
+                databases.add(db);
+            }
+
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("databases", databases);
+            result.put("total", databases.size());
+
+            log.info("返回 {} 个库", databases.size());
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("获取中台库列表失败", e);
+            Map<String, Object> error = new LinkedHashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(500).body(error);
+        }
+    }
+
+    /** 从实例 item 的 metricList 中提取 dbname */
+    @SuppressWarnings("unchecked")
+    private String extractDbname(Map<String, Object> item) {
+        Object metricList = item.get("metricList");
+        if (metricList instanceof List) {
+            for (Object m : (List<?>) metricList) {
+                if (m instanceof Map) {
+                    Map<String, Object> mm = (Map<String, Object>) m;
+                    if ("dbname".equals(mm.get("metricKey"))) {
+                        Object v = mm.get("metricValue");
+                        return v != null ? v.toString() : null;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     // ==================== 中台数据资源列表 ====================
 
     /**
@@ -191,12 +276,18 @@ public class ZhongtaiApiController {
         try {
             String scopeType = (String) body.getOrDefault("scopeType", "User");
             String spaceId = (String) body.get("spaceId");
+            Integer pageIndex = body.get("pageIndex") instanceof Number
+                    ? ((Number) body.get("pageIndex")).intValue() : null;
+            Integer pageSize = body.get("pageSize") instanceof Number
+                    ? ((Number) body.get("pageSize")).intValue() : null;
+            String searchText = (String) body.get("searchText");
+            String dataSourceId = (String) body.get("dataSourceId");
 
-            log.info("用户 {} 请求中台数据资源列表 (scopeType={}, spaceId={})",
-                    userSession.getUsername(), scopeType, spaceId);
+            log.info("用户 {} 请求中台数据资源列表 (scopeType={}, spaceId={}, dataSourceId={}, page={}/{}, search={})",
+                    userSession.getUsername(), scopeType, spaceId, dataSourceId, pageIndex, pageSize, searchText);
 
             Map<String, Object> response = zhongtaiApiService.fetchDataResourceList(
-                    scopeType, spaceId, userSession);
+                    scopeType, spaceId, pageIndex, pageSize, searchText, dataSourceId, userSession);
 
             // 提取 data 列表
             @SuppressWarnings("unchecked")
@@ -208,6 +299,23 @@ public class ZhongtaiApiController {
                     @SuppressWarnings("unchecked")
                     List<Map<String, Object>> d = (List<Map<String, Object>>) data;
                     rawList = d;
+                }
+            }
+
+            // 分页信息（details.pageParam.recordTotal / pageTotal）
+            long recordTotal = rawList.size();
+            long pageTotal = 1;
+            if (details != null) {
+                Object pp = details.get("pageParam");
+                if (pp instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> pageParam = (Map<String, Object>) pp;
+                    if (pageParam.get("recordTotal") instanceof Number) {
+                        recordTotal = ((Number) pageParam.get("recordTotal")).longValue();
+                    }
+                    if (pageParam.get("pageTotal") instanceof Number) {
+                        pageTotal = ((Number) pageParam.get("pageTotal")).longValue();
+                    }
                 }
             }
 
@@ -235,9 +343,10 @@ public class ZhongtaiApiController {
 
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("resources", resources);
-            result.put("total", resources.size());
+            result.put("total", recordTotal);
+            result.put("pageTotal", pageTotal);
 
-            log.info("返回 {} 条数据资源", resources.size());
+            log.info("返回 {} 条数据资源（total={}, pageTotal={}）", resources.size(), recordTotal, pageTotal);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             log.error("获取中台数据资源列表失败", e);
