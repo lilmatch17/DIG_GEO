@@ -18,17 +18,17 @@ public class LayerRepository {
     private JdbcTemplate jdbcTemplate;
 
     public List<Layer> findByProjectId(String projectId) {
-        String sql = "SELECT LAYER_ID, PROJECT_ID, DATASET_ID, LAYER_NAME, TYPE, VIS_CONFIG, LAYER_ORDER, CREATE_TIME FROM DIG_GEO.LAYERS WHERE PROJECT_ID = ? ORDER BY LAYER_ORDER";
+        String sql = "SELECT LAYER_ID, PROJECT_ID, DATASET_ID, LAYER_NAME, TYPE, VIS_CONFIG, LAYER_ORDER, CREATE_TIME FROM LAYERS WHERE PROJECT_ID = ? ORDER BY LAYER_ORDER";
         return jdbcTemplate.query(sql, new Object[]{projectId}, new LayerRowMapper());
     }
 
     public List<Layer> findByDatasetId(String datasetId) {
-        String sql = "SELECT LAYER_ID, PROJECT_ID, DATASET_ID, LAYER_NAME, TYPE, VIS_CONFIG, LAYER_ORDER, CREATE_TIME FROM DIG_GEO.LAYERS WHERE DATASET_ID = ?";
+        String sql = "SELECT LAYER_ID, PROJECT_ID, DATASET_ID, LAYER_NAME, TYPE, VIS_CONFIG, LAYER_ORDER, CREATE_TIME FROM LAYERS WHERE DATASET_ID = ?";
         return jdbcTemplate.query(sql, new Object[]{datasetId}, new LayerRowMapper());
     }
 
     public Layer findById(String layerId) {
-        String sql = "SELECT LAYER_ID, PROJECT_ID, DATASET_ID, LAYER_NAME, TYPE, VIS_CONFIG, LAYER_ORDER, CREATE_TIME FROM DIG_GEO.LAYERS WHERE LAYER_ID = ?";
+        String sql = "SELECT LAYER_ID, PROJECT_ID, DATASET_ID, LAYER_NAME, TYPE, VIS_CONFIG, LAYER_ORDER, CREATE_TIME FROM LAYERS WHERE LAYER_ID = ?";
         List<Layer> layers = jdbcTemplate.query(sql, new Object[]{layerId}, new LayerRowMapper());
         return layers.isEmpty() ? null : layers.get(0);
     }
@@ -37,7 +37,7 @@ public class LayerRepository {
         if (layer.getLayerId() == null) {
             layer.setLayerId(UUID.randomUUID().toString());
         }
-        String sql = "INSERT INTO DIG_GEO.LAYERS (LAYER_ID, PROJECT_ID, DATASET_ID, LAYER_NAME, TYPE, VIS_CONFIG, LAYER_ORDER, CREATE_TIME) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO LAYERS (LAYER_ID, PROJECT_ID, DATASET_ID, LAYER_NAME, TYPE, VIS_CONFIG, LAYER_ORDER, CREATE_TIME) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql,
             layer.getLayerId(),
             layer.getProjectId(),
@@ -52,7 +52,7 @@ public class LayerRepository {
     }
 
     public Layer update(Layer layer) {
-        String sql = "UPDATE DIG_GEO.LAYERS SET PROJECT_ID = ?, DATASET_ID = ?, LAYER_NAME = ?, TYPE = ?, VIS_CONFIG = ?, LAYER_ORDER = ? WHERE LAYER_ID = ?";
+        String sql = "UPDATE LAYERS SET PROJECT_ID = ?, DATASET_ID = ?, LAYER_NAME = ?, TYPE = ?, VIS_CONFIG = ?, LAYER_ORDER = ? WHERE LAYER_ID = ?";
         jdbcTemplate.update(sql,
             layer.getProjectId(),
             layer.getDatasetId(),
@@ -66,12 +66,12 @@ public class LayerRepository {
     }
 
     public void deleteById(String layerId) {
-        String sql = "DELETE FROM DIG_GEO.LAYERS WHERE LAYER_ID = ?";
+        String sql = "DELETE FROM LAYERS WHERE LAYER_ID = ?";
         jdbcTemplate.update(sql, layerId);
     }
 
     public void deleteByProjectId(String projectId) {
-        String sql = "DELETE FROM DIG_GEO.LAYERS WHERE PROJECT_ID = ?";
+        String sql = "DELETE FROM LAYERS WHERE PROJECT_ID = ?";
         jdbcTemplate.update(sql, projectId);
     }
 

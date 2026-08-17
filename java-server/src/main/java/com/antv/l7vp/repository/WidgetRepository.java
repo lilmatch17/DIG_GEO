@@ -18,12 +18,12 @@ public class WidgetRepository {
     private JdbcTemplate jdbcTemplate;
 
     public List<Widget> findByProjectId(String projectId) {
-        String sql = "SELECT WIDGET_ID, PROJECT_ID, CONTAINER_ID, WIDGET_NAME, TYPE, PROPERTIES, SLOT, WIDGET_ORDER FROM DIG_GEO.WIDGETS WHERE PROJECT_ID = ? ORDER BY WIDGET_ORDER";
+        String sql = "SELECT WIDGET_ID, PROJECT_ID, CONTAINER_ID, WIDGET_NAME, TYPE, PROPERTIES, SLOT, WIDGET_ORDER FROM WIDGETS WHERE PROJECT_ID = ? ORDER BY WIDGET_ORDER";
         return jdbcTemplate.query(sql, new Object[]{projectId}, new WidgetRowMapper());
     }
 
     public Widget findById(String widgetId) {
-        String sql = "SELECT WIDGET_ID, PROJECT_ID, CONTAINER_ID, WIDGET_NAME, TYPE, PROPERTIES, SLOT, WIDGET_ORDER FROM DIG_GEO.WIDGETS WHERE WIDGET_ID = ?";
+        String sql = "SELECT WIDGET_ID, PROJECT_ID, CONTAINER_ID, WIDGET_NAME, TYPE, PROPERTIES, SLOT, WIDGET_ORDER FROM WIDGETS WHERE WIDGET_ID = ?";
         List<Widget> widgets = jdbcTemplate.query(sql, new Object[]{widgetId}, new WidgetRowMapper());
         return widgets.isEmpty() ? null : widgets.get(0);
     }
@@ -32,7 +32,7 @@ public class WidgetRepository {
         if (widget.getWidgetId() == null) {
             widget.setWidgetId(UUID.randomUUID().toString());
         }
-        String sql = "INSERT INTO DIG_GEO.WIDGETS (WIDGET_ID, PROJECT_ID, CONTAINER_ID, WIDGET_NAME, TYPE, PROPERTIES, SLOT, WIDGET_ORDER) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO WIDGETS (WIDGET_ID, PROJECT_ID, CONTAINER_ID, WIDGET_NAME, TYPE, PROPERTIES, SLOT, WIDGET_ORDER) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql,
             widget.getWidgetId(),
             widget.getProjectId(),
@@ -47,7 +47,7 @@ public class WidgetRepository {
     }
 
     public Widget update(Widget widget) {
-        String sql = "UPDATE DIG_GEO.WIDGETS SET PROJECT_ID = ?, CONTAINER_ID = ?, WIDGET_NAME = ?, TYPE = ?, PROPERTIES = ?, SLOT = ?, WIDGET_ORDER = ? WHERE WIDGET_ID = ?";
+        String sql = "UPDATE WIDGETS SET PROJECT_ID = ?, CONTAINER_ID = ?, WIDGET_NAME = ?, TYPE = ?, PROPERTIES = ?, SLOT = ?, WIDGET_ORDER = ? WHERE WIDGET_ID = ?";
         jdbcTemplate.update(sql,
             widget.getProjectId(),
             widget.getContainerId(),
@@ -62,12 +62,12 @@ public class WidgetRepository {
     }
 
     public void deleteById(String widgetId) {
-        String sql = "DELETE FROM DIG_GEO.WIDGETS WHERE WIDGET_ID = ?";
+        String sql = "DELETE FROM WIDGETS WHERE WIDGET_ID = ?";
         jdbcTemplate.update(sql, widgetId);
     }
 
     public void deleteByProjectId(String projectId) {
-        String sql = "DELETE FROM DIG_GEO.WIDGETS WHERE PROJECT_ID = ?";
+        String sql = "DELETE FROM WIDGETS WHERE PROJECT_ID = ?";
         jdbcTemplate.update(sql, projectId);
     }
 

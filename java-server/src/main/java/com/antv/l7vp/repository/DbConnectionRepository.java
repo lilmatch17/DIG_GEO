@@ -36,12 +36,12 @@ public class DbConnectionRepository {
     }
 
     public List<DbConnection> findAll() {
-        String sql = "SELECT * FROM DIG_GEO.DB_CONNECTIONS ORDER BY CREATE_TIME";
+        String sql = "SELECT * FROM DB_CONNECTIONS ORDER BY CREATE_TIME";
         return jdbcTemplate.query(sql, new DbConnectionRowMapper());
     }
 
     public DbConnection findById(String connId) {
-        String sql = "SELECT * FROM DIG_GEO.DB_CONNECTIONS WHERE CONN_ID = ?";
+        String sql = "SELECT * FROM DB_CONNECTIONS WHERE CONN_ID = ?";
         List<DbConnection> list = jdbcTemplate.query(sql, new Object[]{connId}, new DbConnectionRowMapper());
         return list.isEmpty() ? null : list.get(0);
     }
@@ -50,7 +50,7 @@ public class DbConnectionRepository {
         if (conn.getConnId() == null) {
             conn.setConnId(UUID.randomUUID().toString());
         }
-        String sql = "INSERT INTO DIG_GEO.DB_CONNECTIONS (CONN_ID, CONN_NAME, DB_TYPE, HOST, PORT, USERNAME, PASSWORD, SCHEMA_NAME, CREATE_TIME, UPDATE_TIME) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO DB_CONNECTIONS (CONN_ID, CONN_NAME, DB_TYPE, HOST, PORT, USERNAME, PASSWORD, SCHEMA_NAME, CREATE_TIME, UPDATE_TIME) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql,
             conn.getConnId(), conn.getConnName(), conn.getDbType(), conn.getHost(),
             conn.getPort(), conn.getUsername(), conn.getPassword(), conn.getSchemaName(),
@@ -59,7 +59,7 @@ public class DbConnectionRepository {
     }
 
     public DbConnection update(DbConnection conn) {
-        String sql = "UPDATE DIG_GEO.DB_CONNECTIONS SET CONN_NAME=?, DB_TYPE=?, HOST=?, PORT=?, USERNAME=?, PASSWORD=?, SCHEMA_NAME=?, UPDATE_TIME=? WHERE CONN_ID=?";
+        String sql = "UPDATE DB_CONNECTIONS SET CONN_NAME=?, DB_TYPE=?, HOST=?, PORT=?, USERNAME=?, PASSWORD=?, SCHEMA_NAME=?, UPDATE_TIME=? WHERE CONN_ID=?";
         jdbcTemplate.update(sql,
             conn.getConnName(), conn.getDbType(), conn.getHost(), conn.getPort(),
             conn.getUsername(), conn.getPassword(), conn.getSchemaName(), conn.getUpdateTime(),
@@ -68,6 +68,6 @@ public class DbConnectionRepository {
     }
 
     public void deleteById(String connId) {
-        jdbcTemplate.update("DELETE FROM DIG_GEO.DB_CONNECTIONS WHERE CONN_ID = ?", connId);
+        jdbcTemplate.update("DELETE FROM DB_CONNECTIONS WHERE CONN_ID = ?", connId);
     }
 }

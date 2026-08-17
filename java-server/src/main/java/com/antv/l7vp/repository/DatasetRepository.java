@@ -18,12 +18,12 @@ public class DatasetRepository {
     private JdbcTemplate jdbcTemplate;
 
     public List<Dataset> findByProjectId(String projectId) {
-        String sql = "SELECT DATASET_ID, PROJECT_ID, DATASET_NAME, TYPE, METADATA, FILTER, CREATE_TIME FROM DIG_GEO.DATASETS WHERE PROJECT_ID = ?";
+        String sql = "SELECT DATASET_ID, PROJECT_ID, DATASET_NAME, TYPE, METADATA, FILTER, CREATE_TIME FROM DATASETS WHERE PROJECT_ID = ?";
         return jdbcTemplate.query(sql, new Object[]{projectId}, new DatasetRowMapper());
     }
 
     public Dataset findById(String datasetId) {
-        String sql = "SELECT DATASET_ID, PROJECT_ID, DATASET_NAME, TYPE, METADATA, FILTER, CREATE_TIME FROM DIG_GEO.DATASETS WHERE DATASET_ID = ?";
+        String sql = "SELECT DATASET_ID, PROJECT_ID, DATASET_NAME, TYPE, METADATA, FILTER, CREATE_TIME FROM DATASETS WHERE DATASET_ID = ?";
         List<Dataset> datasets = jdbcTemplate.query(sql, new Object[]{datasetId}, new DatasetRowMapper());
         return datasets.isEmpty() ? null : datasets.get(0);
     }
@@ -32,7 +32,7 @@ public class DatasetRepository {
         if (dataset.getDatasetId() == null) {
             dataset.setDatasetId(UUID.randomUUID().toString());
         }
-        String sql = "INSERT INTO DIG_GEO.DATASETS (DATASET_ID, PROJECT_ID, DATASET_NAME, TYPE, METADATA, FILTER, CREATE_TIME) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO DATASETS (DATASET_ID, PROJECT_ID, DATASET_NAME, TYPE, METADATA, FILTER, CREATE_TIME) VALUES (?, ?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql,
             dataset.getDatasetId(),
             dataset.getProjectId(),
@@ -46,7 +46,7 @@ public class DatasetRepository {
     }
 
     public Dataset update(Dataset dataset) {
-        String sql = "UPDATE DIG_GEO.DATASETS SET DATASET_NAME = ?, TYPE = ?, METADATA = ?, FILTER = ? WHERE DATASET_ID = ?";
+        String sql = "UPDATE DATASETS SET DATASET_NAME = ?, TYPE = ?, METADATA = ?, FILTER = ? WHERE DATASET_ID = ?";
         jdbcTemplate.update(sql,
             dataset.getDatasetName(),
             dataset.getType(),
@@ -58,12 +58,12 @@ public class DatasetRepository {
     }
 
     public void deleteById(String datasetId) {
-        String sql = "DELETE FROM DIG_GEO.DATASETS WHERE DATASET_ID = ?";
+        String sql = "DELETE FROM DATASETS WHERE DATASET_ID = ?";
         jdbcTemplate.update(sql, datasetId);
     }
 
     public void deleteByProjectId(String projectId) {
-        String sql = "DELETE FROM DIG_GEO.DATASETS WHERE PROJECT_ID = ?";
+        String sql = "DELETE FROM DATASETS WHERE PROJECT_ID = ?";
         jdbcTemplate.update(sql, projectId);
     }
 
