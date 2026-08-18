@@ -40,10 +40,10 @@
         <!-- 达梦JDBC驱动（本地安装） -->
         <dependency>
             <groupId>com.dameng</groupId>
-            <artifactId>DmJdbcDriver18</artifactId>
+            <artifactId>DmJdbcDriver8</artifactId>
             <version>8.1.1.128</version>
             <scope>system</scope>
-            <systemPath>F:\dmdbms\drivers\jdbc\DmJdbcDriver18.jar</systemPath>
+            <systemPath>/home/dmdbms/drivers/jdbc/DmJdbcDriver8.jar</systemPath>
         </dependency>
 
         <!-- JSON处理 -->

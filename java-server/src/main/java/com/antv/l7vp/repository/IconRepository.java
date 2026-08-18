@@ -19,18 +19,18 @@ public class IconRepository {
     private JdbcTemplate jdbcTemplate;
 
     public List<IconItem> findByCategoryId(String categoryId) {
-        String sql = "SELECT ICON_ID, CATEGORY_ID, LIBRARY_CODE, CODE_NAME, FILE_NAME, ORIGINAL_NAME, FILE_TYPE, FILE_SIZE, URL, SORT_ORDER, CREATE_TIME FROM DIG_GEO.ICONS WHERE CATEGORY_ID = ? ORDER BY SORT_ORDER";
+        String sql = "SELECT ICON_ID, CATEGORY_ID, LIBRARY_CODE, CODE_NAME, FILE_NAME, ORIGINAL_NAME, FILE_TYPE, FILE_SIZE, URL, SORT_ORDER, CREATE_TIME FROM ICONS WHERE CATEGORY_ID = ? ORDER BY SORT_ORDER";
         return jdbcTemplate.query(sql, new Object[]{categoryId}, new IconItemRowMapper());
     }
 
     public IconItem findById(String iconId) {
-        String sql = "SELECT ICON_ID, CATEGORY_ID, LIBRARY_CODE, CODE_NAME, FILE_NAME, ORIGINAL_NAME, FILE_TYPE, FILE_SIZE, URL, SORT_ORDER, CREATE_TIME FROM DIG_GEO.ICONS WHERE ICON_ID = ?";
+        String sql = "SELECT ICON_ID, CATEGORY_ID, LIBRARY_CODE, CODE_NAME, FILE_NAME, ORIGINAL_NAME, FILE_TYPE, FILE_SIZE, URL, SORT_ORDER, CREATE_TIME FROM ICONS WHERE ICON_ID = ?";
         List<IconItem> icons = jdbcTemplate.query(sql, new Object[]{iconId}, new IconItemRowMapper());
         return icons.isEmpty() ? null : icons.get(0);
     }
 
     public IconItem findByCode(String libraryCode, String codeName) {
-        String sql = "SELECT ICON_ID, CATEGORY_ID, LIBRARY_CODE, CODE_NAME, FILE_NAME, ORIGINAL_NAME, FILE_TYPE, FILE_SIZE, URL, SORT_ORDER, CREATE_TIME FROM DIG_GEO.ICONS WHERE LIBRARY_CODE = ? AND CODE_NAME = ?";
+        String sql = "SELECT ICON_ID, CATEGORY_ID, LIBRARY_CODE, CODE_NAME, FILE_NAME, ORIGINAL_NAME, FILE_TYPE, FILE_SIZE, URL, SORT_ORDER, CREATE_TIME FROM ICONS WHERE LIBRARY_CODE = ? AND CODE_NAME = ?";
         List<IconItem> icons = jdbcTemplate.query(sql, new Object[]{libraryCode, codeName}, new IconItemRowMapper());
         return icons.isEmpty() ? null : icons.get(0);
     }
@@ -39,7 +39,7 @@ public class IconRepository {
         if (icon.getIconId() == null) {
             icon.setIconId(UUID.randomUUID().toString());
         }
-        String sql = "INSERT INTO DIG_GEO.ICONS (ICON_ID, CATEGORY_ID, LIBRARY_CODE, CODE_NAME, FILE_NAME, ORIGINAL_NAME, FILE_TYPE, FILE_SIZE, URL, SORT_ORDER, CREATE_TIME) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO ICONS (ICON_ID, CATEGORY_ID, LIBRARY_CODE, CODE_NAME, FILE_NAME, ORIGINAL_NAME, FILE_TYPE, FILE_SIZE, URL, SORT_ORDER, CREATE_TIME) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql,
             icon.getIconId(),
             icon.getCategoryId(),
@@ -57,7 +57,7 @@ public class IconRepository {
     }
 
     public IconItem update(IconItem icon) {
-        String sql = "UPDATE DIG_GEO.ICONS SET CATEGORY_ID = ?, LIBRARY_CODE = ?, CODE_NAME = ?, FILE_NAME = ?, ORIGINAL_NAME = ?, FILE_TYPE = ?, FILE_SIZE = ?, URL = ?, SORT_ORDER = ? WHERE ICON_ID = ?";
+        String sql = "UPDATE ICONS SET CATEGORY_ID = ?, LIBRARY_CODE = ?, CODE_NAME = ?, FILE_NAME = ?, ORIGINAL_NAME = ?, FILE_TYPE = ?, FILE_SIZE = ?, URL = ?, SORT_ORDER = ? WHERE ICON_ID = ?";
         jdbcTemplate.update(sql,
             icon.getCategoryId(),
             icon.getLibraryCode(),
@@ -74,17 +74,17 @@ public class IconRepository {
     }
 
     public void deleteById(String iconId) {
-        String sql = "DELETE FROM DIG_GEO.ICONS WHERE ICON_ID = ?";
+        String sql = "DELETE FROM ICONS WHERE ICON_ID = ?";
         jdbcTemplate.update(sql, iconId);
     }
 
     public void deleteByCategoryId(String categoryId) {
-        String sql = "DELETE FROM DIG_GEO.ICONS WHERE CATEGORY_ID = ?";
+        String sql = "DELETE FROM ICONS WHERE CATEGORY_ID = ?";
         jdbcTemplate.update(sql, categoryId);
     }
 
     public void batchUpdateOrder(List<Map<String, Object>> orders) {
-        String sql = "UPDATE DIG_GEO.ICONS SET SORT_ORDER = ? WHERE ICON_ID = ?";
+        String sql = "UPDATE ICONS SET SORT_ORDER = ? WHERE ICON_ID = ?";
         jdbcTemplate.batchUpdate(sql, orders, orders.size(), (ps, order) -> {
             ps.setInt(1, ((Number) order.get("sortOrder")).intValue());
             ps.setString(2, (String) order.get("iconId"));

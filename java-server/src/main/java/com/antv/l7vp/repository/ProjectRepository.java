@@ -22,12 +22,12 @@ public class ProjectRepository {
     private ObjectMapper objectMapper;
 
     public List<Project> findAll() {
-        String sql = "SELECT PROJECT_ID, PROJECT_NAME, DESCRIPTION, CREATE_TIME, UPDATE_TIME, THUMBNAIL, ASSET_PACKAGE_IDS, MAP_CONFIG FROM DIG_GEO.PROJECTS ORDER BY UPDATE_TIME DESC";
+        String sql = "SELECT PROJECT_ID, PROJECT_NAME, DESCRIPTION, CREATE_TIME, UPDATE_TIME, THUMBNAIL, ASSET_PACKAGE_IDS, MAP_CONFIG FROM PROJECTS ORDER BY UPDATE_TIME DESC";
         return jdbcTemplate.query(sql, new ProjectRowMapper());
     }
 
     public Project findById(String projectId) {
-        String sql = "SELECT PROJECT_ID, PROJECT_NAME, DESCRIPTION, CREATE_TIME, UPDATE_TIME, THUMBNAIL, ASSET_PACKAGE_IDS, MAP_CONFIG FROM DIG_GEO.PROJECTS WHERE PROJECT_ID = ?";
+        String sql = "SELECT PROJECT_ID, PROJECT_NAME, DESCRIPTION, CREATE_TIME, UPDATE_TIME, THUMBNAIL, ASSET_PACKAGE_IDS, MAP_CONFIG FROM PROJECTS WHERE PROJECT_ID = ?";
         List<Project> projects = jdbcTemplate.query(sql, new Object[]{projectId}, new ProjectRowMapper());
         return projects.isEmpty() ? null : projects.get(0);
     }
@@ -36,7 +36,7 @@ public class ProjectRepository {
         if (project.getProjectId() == null) {
             project.setProjectId(UUID.randomUUID().toString());
         }
-        String sql = "INSERT INTO DIG_GEO.PROJECTS (PROJECT_ID, PROJECT_NAME, DESCRIPTION, CREATE_TIME, UPDATE_TIME, THUMBNAIL, ASSET_PACKAGE_IDS, MAP_CONFIG) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO PROJECTS (PROJECT_ID, PROJECT_NAME, DESCRIPTION, CREATE_TIME, UPDATE_TIME, THUMBNAIL, ASSET_PACKAGE_IDS, MAP_CONFIG) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try {
             String assetPackageIdsJson = project.getAssetPackageIds() != null
                 ? objectMapper.writeValueAsString(project.getAssetPackageIds()) : null;
@@ -57,7 +57,7 @@ public class ProjectRepository {
     }
 
     public Project update(Project project) {
-        String sql = "UPDATE DIG_GEO.PROJECTS SET PROJECT_NAME = ?, DESCRIPTION = ?, UPDATE_TIME = ?, THUMBNAIL = ?, ASSET_PACKAGE_IDS = ?, MAP_CONFIG = ? WHERE PROJECT_ID = ?";
+        String sql = "UPDATE PROJECTS SET PROJECT_NAME = ?, DESCRIPTION = ?, UPDATE_TIME = ?, THUMBNAIL = ?, ASSET_PACKAGE_IDS = ?, MAP_CONFIG = ? WHERE PROJECT_ID = ?";
         try {
             String assetPackageIdsJson = project.getAssetPackageIds() != null
                 ? objectMapper.writeValueAsString(project.getAssetPackageIds()) : null;
@@ -77,7 +77,7 @@ public class ProjectRepository {
     }
 
     public void deleteById(String projectId) {
-        String sql = "DELETE FROM DIG_GEO.PROJECTS WHERE PROJECT_ID = ?";
+        String sql = "DELETE FROM PROJECTS WHERE PROJECT_ID = ?";
         jdbcTemplate.update(sql, projectId);
     }
 

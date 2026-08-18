@@ -19,12 +19,12 @@ public class IconCategoryRepository {
     private JdbcTemplate jdbcTemplate;
 
     public List<IconCategory> findAll() {
-        String sql = "SELECT CATEGORY_ID, CATEGORY_NAME, SORT_ORDER, CREATE_TIME FROM DIG_GEO.ICON_CATEGORIES ORDER BY SORT_ORDER";
+        String sql = "SELECT CATEGORY_ID, CATEGORY_NAME, SORT_ORDER, CREATE_TIME FROM ICON_CATEGORIES ORDER BY SORT_ORDER";
         return jdbcTemplate.query(sql, new IconCategoryRowMapper());
     }
 
     public IconCategory findById(String categoryId) {
-        String sql = "SELECT CATEGORY_ID, CATEGORY_NAME, SORT_ORDER, CREATE_TIME FROM DIG_GEO.ICON_CATEGORIES WHERE CATEGORY_ID = ?";
+        String sql = "SELECT CATEGORY_ID, CATEGORY_NAME, SORT_ORDER, CREATE_TIME FROM ICON_CATEGORIES WHERE CATEGORY_ID = ?";
         List<IconCategory> categories = jdbcTemplate.query(sql, new Object[]{categoryId}, new IconCategoryRowMapper());
         return categories.isEmpty() ? null : categories.get(0);
     }
@@ -33,7 +33,7 @@ public class IconCategoryRepository {
         if (category.getCategoryId() == null) {
             category.setCategoryId(UUID.randomUUID().toString());
         }
-        String sql = "INSERT INTO DIG_GEO.ICON_CATEGORIES (CATEGORY_ID, CATEGORY_NAME, SORT_ORDER, CREATE_TIME) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO ICON_CATEGORIES (CATEGORY_ID, CATEGORY_NAME, SORT_ORDER, CREATE_TIME) VALUES (?, ?, ?, ?)";
         jdbcTemplate.update(sql,
             category.getCategoryId(),
             category.getCategoryName(),
@@ -44,7 +44,7 @@ public class IconCategoryRepository {
     }
 
     public IconCategory update(IconCategory category) {
-        String sql = "UPDATE DIG_GEO.ICON_CATEGORIES SET CATEGORY_NAME = ?, SORT_ORDER = ? WHERE CATEGORY_ID = ?";
+        String sql = "UPDATE ICON_CATEGORIES SET CATEGORY_NAME = ?, SORT_ORDER = ? WHERE CATEGORY_ID = ?";
         jdbcTemplate.update(sql,
             category.getCategoryName(),
             category.getSortOrder(),
@@ -54,12 +54,12 @@ public class IconCategoryRepository {
     }
 
     public void deleteById(String categoryId) {
-        String sql = "DELETE FROM DIG_GEO.ICON_CATEGORIES WHERE CATEGORY_ID = ?";
+        String sql = "DELETE FROM ICON_CATEGORIES WHERE CATEGORY_ID = ?";
         jdbcTemplate.update(sql, categoryId);
     }
 
     public void batchUpdateOrder(List<Map<String, Object>> orders) {
-        String sql = "UPDATE DIG_GEO.ICON_CATEGORIES SET SORT_ORDER = ? WHERE CATEGORY_ID = ?";
+        String sql = "UPDATE ICON_CATEGORIES SET SORT_ORDER = ? WHERE CATEGORY_ID = ?";
         jdbcTemplate.batchUpdate(sql, orders, orders.size(), (ps, order) -> {
             ps.setInt(1, ((Number) order.get("sortOrder")).intValue());
             ps.setString(2, (String) order.get("categoryId"));

@@ -20,12 +20,12 @@ public class DatasetRowRepository {
     private JdbcTemplate jdbcTemplate;
 
     public Map<String, Object> findByDatasetId(String datasetId, int page, int size) {
-        String countSql = "SELECT COUNT(*) FROM DIG_GEO.DATASET_ROWS WHERE DATASET_ID = ?";
+        String countSql = "SELECT COUNT(*) FROM DATASET_ROWS WHERE DATASET_ID = ?";
         Integer total = jdbcTemplate.queryForObject(countSql, new Object[]{datasetId}, Integer.class);
         if (total == null) total = 0;
 
         int offset = page * size;
-        String sql = "SELECT ROW_ID, DATASET_ID, ROW_INDEX, ROW_DATA FROM DIG_GEO.DATASET_ROWS WHERE DATASET_ID = ? ORDER BY ROW_INDEX LIMIT ? OFFSET ?";
+        String sql = "SELECT ROW_ID, DATASET_ID, ROW_INDEX, ROW_DATA FROM DATASET_ROWS WHERE DATASET_ID = ? ORDER BY ROW_INDEX LIMIT ? OFFSET ?";
         List<DatasetRow> rows = jdbcTemplate.query(sql, new Object[]{datasetId, size, offset}, new DatasetRowRowMapper());
 
         Map<String, Object> result = new HashMap<>();
@@ -37,7 +37,7 @@ public class DatasetRowRepository {
     }
 
     public void batchInsert(String datasetId, List<DatasetRow> rows, int batchSize) {
-        String sql = "INSERT INTO DIG_GEO.DATASET_ROWS (ROW_ID, DATASET_ID, ROW_INDEX, ROW_DATA) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO DATASET_ROWS (ROW_ID, DATASET_ID, ROW_INDEX, ROW_DATA) VALUES (?, ?, ?, ?)";
         jdbcTemplate.batchUpdate(sql, rows, batchSize, (ps, row) -> {
             if (row.getRowId() == null) {
                 row.setRowId(UUID.randomUUID().toString());
@@ -51,7 +51,7 @@ public class DatasetRowRepository {
     }
 
     public void deleteByDatasetId(String datasetId) {
-        String sql = "DELETE FROM DIG_GEO.DATASET_ROWS WHERE DATASET_ID = ?";
+        String sql = "DELETE FROM DATASET_ROWS WHERE DATASET_ID = ?";
         jdbcTemplate.update(sql, datasetId);
     }
 
