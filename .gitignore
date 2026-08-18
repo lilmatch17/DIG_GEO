@@ -3,6 +3,7 @@
 # dependencies
 node_modules
 npm-debug.log*
+npminstall-debug.log
 yarn-error.log
 yarn.lock
 package-lock.json
@@ -34,4 +35,4 @@ master/
 java-server/target/
 deploy/
 node_modules/
-
+*.iml

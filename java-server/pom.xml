@@ -46,6 +46,13 @@
             <systemPath>/home/dmdbms/drivers/jdbc/DmJdbcDriver8.jar</systemPath>
         </dependency>
 
+        <!-- MySQL / Doris JDBC 驱动（Doris 走 MySQL 协议，提供 com.mysql.cj.jdbc.Driver） -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.33</version>
+        </dependency>
+
         <!-- JSON处理 -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

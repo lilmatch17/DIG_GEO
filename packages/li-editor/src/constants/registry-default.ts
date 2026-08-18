@@ -11,6 +11,8 @@ import {
   TilesetsDataset,
   UploadDataset,
   WidgetsPanel,
+  ZhongtaiApiDataset,
+  ZhongtaiTableDataset,
 } from '../widgets';
 
 export const Registry_Default_Editor_Widgets: ImplementEditorWidget[] = [
@@ -21,6 +23,8 @@ export const Registry_Default_Editor_Widgets: ImplementEditorWidget[] = [
   UploadDataset,
   TilesetsDataset,
   FetchDataset,
+  ZhongtaiTableDataset,
+  ZhongtaiApiDataset,
   DatasetPreview,
   MapSetting,
   Export,

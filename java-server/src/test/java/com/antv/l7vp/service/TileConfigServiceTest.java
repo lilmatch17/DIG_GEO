@@ -51,13 +51,15 @@ class TileConfigServiceTest {
         config.setMinZoom(1);
         config.setMaxZoom(20);
 
-        when(tileConfigRepository.upsert(any(TileConfig.class))).thenReturn(config);
+        when(tileConfigRepository.findById("default")).thenReturn(null);
+        when(tileConfigRepository.insert(any(TileConfig.class))).thenReturn(config);
 
         TileConfig result = tileConfigService.saveConfig(config);
 
         assertNotNull(result);
         assertEquals("default", result.getId());
         assertNotNull(result.getUpdateTime());
-        verify(tileConfigRepository).upsert(any(TileConfig.class));
+        verify(tileConfigRepository).findById("default");
+        verify(tileConfigRepository).insert(any(TileConfig.class));
     }
 }
