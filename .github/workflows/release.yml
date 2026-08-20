@@ -16,7 +16,7 @@ jobs:
 
       - name: Installation
         run: |
-          yarn install
+          yarn install --ignore-engines
 
       - name: Build Website
         run: |

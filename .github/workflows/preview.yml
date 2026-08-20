@@ -21,7 +21,7 @@ jobs:
 
       - name: Installation
         run: |
-          yarn install
+          yarn install --ignore-engines
 
       - uses: afc163/surge-preview@v1
         with:
