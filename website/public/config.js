@@ -23,4 +23,8 @@ window.L7VP_CONFIG = {
   
   // 图标目录路径
   iconPath: '/icons',
+
+  // 数据中台服务基地址（含端口），用于拼接中台 API / 数据接口地址
+  // 封闭环境部署时改成实际中台地址，改完无需重新构建
+  zhongtaiBaseUrl: 'http://10.16.1.6:8081',
 };

@@ -3,6 +3,7 @@ import { Button, Form, Input, Menu, message, Space, Table, Typography } from 'an
 import React, { useCallback, useEffect, useState } from 'react';
 import { useEditorService } from '../../hooks';
 import type { ImplementEditorAddDatasetWidgetProps } from '../../types';
+import { getZhongtaiSpaceId } from '../zhongtai';
 
 type Props = ImplementEditorAddDatasetWidgetProps;
 
@@ -77,7 +78,7 @@ export default function ZhongtaiTableDataset(props: Props) {
       const res = await fetch('/api/zhongtai/databases/list', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scopeType: 'Space' }),
+        body: JSON.stringify({ scopeType: 'Space', spaceId: getZhongtaiSpaceId() }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -107,6 +108,7 @@ export default function ZhongtaiTableDataset(props: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           scopeType: 'Space',
+          spaceId: getZhongtaiSpaceId(),
           dataSourceId: selectedDbId,
           searchText: searchText || undefined,
           pageIndex,

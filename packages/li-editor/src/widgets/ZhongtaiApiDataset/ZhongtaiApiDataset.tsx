@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useEditorService, usePrefixCls } from '../../hooks';
 import type { ImplementEditorAddDatasetWidgetProps } from '../../types';
 import DynamicFormItem from '../FetchDataset/DynamicFormItem';
+import { getZhongtaiBaseUrl, getZhongtaiSpaceId } from '../zhongtai';
 
 type Props = ImplementEditorAddDatasetWidgetProps;
 
@@ -37,7 +38,7 @@ export default function ZhongtaiApiDataset(props: Props) {
     fetch('/api/zhongtai/api-resources/list', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ scopeType: 'Space' }),
+      body: JSON.stringify({ scopeType: 'Space', spaceId: getZhongtaiSpaceId() }),
     })
       .then(async (r) => {
         const data = await r.json().catch(() => ({}));
@@ -65,7 +66,7 @@ export default function ZhongtaiApiDataset(props: Props) {
     (resourceId: string) => {
       const resource = resources.find((r) => r.resourceId === resourceId);
       if (resource) {
-        const apiUrl = 'http://10.16.1.6:8081/daasDMS/ssoapi/ApiDataResource/' + resource.resourceCode;
+        const apiUrl = getZhongtaiBaseUrl() + '/daasDMS/ssoapi/ApiDataResource/' + resource.resourceCode;
         form.setFieldsValue({ apiUrl, name: resource.resourceName });
         setDatasetConfig({ name: resource.resourceName, apiUrl, resourceId });
       }
@@ -117,6 +118,7 @@ export default function ZhongtaiApiDataset(props: Props) {
           apiUrl: values.apiUrl,
           variableParams: arrayToObject(values.variableParams),
           scopeType: 'User',
+          spaceId: getZhongtaiSpaceId(),
         }),
       });
       if (!resp.ok) {
