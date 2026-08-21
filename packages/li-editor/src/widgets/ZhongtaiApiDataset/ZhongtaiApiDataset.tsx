@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useEditorService, usePrefixCls } from '../../hooks';
 import type { ImplementEditorAddDatasetWidgetProps } from '../../types';
 import DynamicFormItem from '../FetchDataset/DynamicFormItem';
+import { getZhongtaiBaseUrl, getZhongtaiSpaceId } from '../zhongtai';
 
 type Props = ImplementEditorAddDatasetWidgetProps;
 
@@ -37,7 +38,7 @@ export default function ZhongtaiApiDataset(props: Props) {
     fetch('/api/zhongtai/api-resources/list', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ scopeType: 'Space' }),
+      body: JSON.stringify({ scopeType: 'Space', spaceId: getZhongtaiSpaceId() }),
     })
       .then(async (r) => {
         const data = await r.json().catch(() => ({}));
@@ -65,7 +66,12 @@ export default function ZhongtaiApiDataset(props: Props) {
     (resourceId: string) => {
       const resource = resources.find((r) => r.resourceId === resourceId);
       if (resource) {
-        const apiUrl = 'http://10.16.1.6:8081/daasDMS/ssoapi/ApiDataResource/' + resource.resourceCode;
+        const baseUrl = getZhongtaiBaseUrl();
+        if (!baseUrl) {
+          message.error('未配置中台服务地址，请设置 window.L7VP_CONFIG.zhongtaiBaseUrl');
+          return;
+        }
+        const apiUrl = baseUrl + '/daasDMS/ssoapi/ApiDataResource/' + resource.resourceCode;
         form.setFieldsValue({ apiUrl, name: resource.resourceName });
         setDatasetConfig({ name: resource.resourceName, apiUrl, resourceId });
       }
@@ -116,7 +122,11 @@ export default function ZhongtaiApiDataset(props: Props) {
         body: JSON.stringify({
           apiUrl: values.apiUrl,
           variableParams: arrayToObject(values.variableParams),
-          scopeType: 'User',
+          // API 数据调用（daasDMS/ssoapi/ApiDataResource）走 Space 上下文：数据空间所属的 API 在 User(个人门户)
+          // 上下文下 viewData 判定不通过（连拥有者都 403），中台 UI 自己的「API服务测试」也是 scopeType=Space。
+          // 地图软件只服务数据空间用户，故预览也用 Space（2026-08-21 实测管理员 Space 上下文可调通）。
+          scopeType: 'Space',
+          spaceId: getZhongtaiSpaceId(),
         }),
       });
       if (!resp.ok) {
@@ -170,7 +180,7 @@ export default function ZhongtaiApiDataset(props: Props) {
             <Input placeholder="请输入数据集名称" />
           </Form.Item>
           <Form.Item name="apiUrl" label="API地址" rules={[{ required: true, message: '请输入API地址' }]}>
-            <Input placeholder="http://10.16.1.6:8081/daasDMS/ssoapi/ApiDataResource/test_1017001" />
+            <Input placeholder="/daasDMS/ssoapi/ApiDataResource/{resourceCode}" />
           </Form.Item>
           <Form.Item label="输入参数" name="variableParams">
             <DynamicFormItem fieldName="variableParams" />
