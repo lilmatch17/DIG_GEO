@@ -1,5 +1,5 @@
 import { getUniqueId } from '@antv/li-sdk';
-import { Button, Form, Input, InputNumber, message, Modal, Select, Space, Table } from 'antd';
+import { Button, Form, Input, message, Select, Space, Table } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useEditorService } from '../../hooks';
 import type { ImplementEditorAddDatasetWidgetProps } from '../../types';
@@ -11,7 +11,7 @@ export default function DatabaseDataset(props: Props) {
   const { appService } = useEditorService();
   const [form] = Form.useForm();
   const [connections, setConnections] = useState<any[]>([]);
-  const [tables, setTables] = useState<Array<{ name: string; comment?: string }>>([]);
+  const [tables, setTables] = useState<{ name: string; comment?: string }[]>([]);
   const [loadingTables, setLoadingTables] = useState(false);
   const [previewData, setPreviewData] = useState<any[] | null>(null);
   const [previewColumns, setPreviewColumns] = useState<any[]>([]);
@@ -20,7 +20,7 @@ export default function DatabaseDataset(props: Props) {
   const [submitting, setSubmitting] = useState(false);
   const implementDatasetService = appService.getImplementService('GET_DATABASE_DATA_LIST');
   // 检查服务是否真实存在（NOOP_SERVICE 的 metadata.name 为 undefined）
-  const serviceAvailable = !!(implementDatasetService?.metadata?.name);
+  const serviceAvailable = !!implementDatasetService?.metadata?.name;
 
   // 用 ref 跟踪当前值，避免闭包问题
   const selectedConnRef = useRef<string>();
@@ -28,8 +28,8 @@ export default function DatabaseDataset(props: Props) {
 
   useEffect(() => {
     fetch('/api/db-connections')
-      .then(r => r.json())
-      .then(data => setConnections(Array.isArray(data) ? data : []))
+      .then((r) => r.json())
+      .then((data) => setConnections(Array.isArray(data) ? data : []))
       .catch(() => setConnections([]));
   }, []);
 
@@ -42,13 +42,13 @@ export default function DatabaseDataset(props: Props) {
     if (!connId) return;
     setLoadingTables(true);
     fetch(`/api/db-connections/${connId}/tables`)
-      .then(r => r.json())
-      .then(data => {
+      .then((r) => r.json())
+      .then((data) => {
         // 兼容旧格式 (string[]) 和新格式 ([{name, comment}])
-        let tableList: Array<{ name: string; comment?: string }> = [];
+        let tableList: { name: string; comment?: string }[] = [];
         if (Array.isArray(data)) {
           tableList = data.map((item: any) =>
-            typeof item === 'string' ? { name: item, comment: '' } : { name: item.name, comment: item.comment || '' }
+            typeof item === 'string' ? { name: item, comment: '' } : { name: item.name, comment: item.comment || '' },
           );
         }
         setTables(tableList);
@@ -61,7 +61,10 @@ export default function DatabaseDataset(props: Props) {
     // 从 ref 读取最新值
     const connId = selectedConnRef.current;
     const tableName = selectedTableRef.current;
-    if (!connId || !tableName) return;
+    if (!connId || !tableName) {
+      message.warning('请先选择数据库连接和数据表');
+      return;
+    }
     setPreviewLoading(true);
     try {
       const res = await fetch(`/api/db-connections/${connId}/tables/${encodeURIComponent(tableName)}/preview?limit=20`);
@@ -71,9 +74,13 @@ export default function DatabaseDataset(props: Props) {
         return;
       }
       const data = await res.json();
-      setPreviewData(data.rows || []);
+      const rows = data.rows || [];
+      setPreviewData(rows);
       setPreviewColumns(data.columns || []);
       setRowCount(data.rowCount || 0);
+      if (rows.length === 0) {
+        message.info('返回数据为空');
+      }
     } catch (err: any) {
       message.error('预览请求失败: ' + (err.message || '网络错误'));
     } finally {
@@ -86,7 +93,11 @@ export default function DatabaseDataset(props: Props) {
       message.error('数据集服务未注册，无法创建。请刷新页面后重试。');
       return;
     }
-    try { await form.validateFields(); } catch { return; }
+    try {
+      await form.validateFields();
+    } catch {
+      return;
+    }
 
     const values = form.getFieldsValue();
     setSubmitting(true);
@@ -115,10 +126,16 @@ export default function DatabaseDataset(props: Props) {
     }
   }, [implementDatasetService, form, rowCount, onSubmit]);
 
-  const canSubmit = !!(form.getFieldValue('name') && form.getFieldValue('connectionId') && form.getFieldValue('tableName'));
-  const columns = previewData && previewData.length > 0
-    ? Object.keys(previewData[0]).map(key => ({ title: key, dataIndex: key, key, ellipsis: true }))
-    : [];
+  // 用 Form.useWatch 监听表单值：form.getFieldValue() 在 render 时只取一次、表单变化不触发重渲染，
+  // 会导致「添加」按钮一直保持初始 disabled。useWatch 在值变化时触发重渲染（antd v5 支持）。
+  const watchName = Form.useWatch('name', form);
+  const watchConnId = Form.useWatch('connectionId', form);
+  const watchTableName = Form.useWatch('tableName', form);
+  const canSubmit = !!(watchName && watchConnId && watchTableName);
+  const columns =
+    previewData && previewData.length > 0
+      ? Object.keys(previewData[0]).map((key) => ({ title: key, dataIndex: key, key, ellipsis: true }))
+      : [];
 
   return (
     <>
@@ -130,7 +147,10 @@ export default function DatabaseDataset(props: Props) {
           <Form.Item name="connectionId" label="数据库连接" rules={[{ required: true }]}>
             <Select
               placeholder="请选择数据库连接"
-              options={connections.map((c: any) => ({ value: c.connId, label: `${c.connName} (${c.dbType === 'MySQL' ? 'Doris' : c.dbType})` }))}
+              options={connections.map((c: any) => ({
+                value: c.connId,
+                label: `${c.connName} (${c.dbType === 'MySQL' ? 'Doris' : c.dbType})`,
+              }))}
               onChange={handleConnChange}
             />
           </Form.Item>
@@ -139,12 +159,16 @@ export default function DatabaseDataset(props: Props) {
               placeholder="请选择数据表"
               loading={loadingTables}
               showSearch
-              filterOption={(input, option) => (option?.label as string || '').toLowerCase().includes(input.toLowerCase())}
-              options={tables.map(t => ({
+              filterOption={(input, option) =>
+                ((option?.label as string) || '').toLowerCase().includes(input.toLowerCase())
+              }
+              options={tables.map((t) => ({
                 value: t.name,
                 label: t.comment ? `${t.name}（${t.comment}）` : t.name,
               }))}
-              onChange={(val) => { selectedTableRef.current = val; }}
+              onChange={(val) => {
+                selectedTableRef.current = val;
+              }}
             />
           </Form.Item>
           <div style={{ marginBottom: 16 }}>
@@ -152,9 +176,7 @@ export default function DatabaseDataset(props: Props) {
               预览数据
             </Button>
             {rowCount > 0 && (
-              <span style={{ marginLeft: 12, color: '#52c41a' }}>
-                共 {rowCount.toLocaleString()} 行
-              </span>
+              <span style={{ marginLeft: 12, color: '#52c41a' }}>共 {rowCount.toLocaleString()} 行</span>
             )}
           </div>
         </Form>
@@ -173,7 +195,9 @@ export default function DatabaseDataset(props: Props) {
       <div className="li-fetch-dataset__footer ant-modal-footer">
         <Space>
           <Button onClick={onCancel}>返回</Button>
-          <Button disabled={!canSubmit} type="primary" onClick={handleSubmit} loading={submitting}>添加</Button>
+          <Button disabled={!canSubmit} type="primary" onClick={handleSubmit} loading={submitting}>
+            添加
+          </Button>
         </Space>
       </div>
     </>

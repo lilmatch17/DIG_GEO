@@ -6,13 +6,11 @@
  *   2) hash 里携带的 query（部分 hash 路由场景兜底）
  *   3) 浏览器 localStorage（同源时中台会把当前空间写入，跨域读不到）
  *
- * 中台服务基地址：优先读 window.L7VP_CONFIG.zhongtaiBaseUrl（内网部署直接改 public/config.js，
- * 无需重新构建），兜底到默认地址。
+ * 中台服务基地址：读 window.L7VP_CONFIG.zhongtaiBaseUrl（内网部署直接改 public/config.js，
+ * 无需重新构建）。未配置时返回空字符串，调用方须提示配置缺失，不再兜底到硬编码地址。
  */
 
 const SPACE_ID_KEYS = ['daas_space_id', 'space_id', 'spaceId'];
-
-const DEFAULT_ZHONGTAI_BASE_URL = 'http://10.16.1.6:8081';
 
 function pickParam(params: URLSearchParams): string | undefined {
   for (const key of SPACE_ID_KEYS) {
@@ -51,10 +49,10 @@ export function getZhongtaiSpaceId(): string | undefined {
   return undefined;
 }
 
-/** 读取中台服务基地址（含端口，结尾无斜杠） */
+/** 读取中台服务基地址（含端口，结尾无斜杠）。未配置时返回空字符串，由调用方提示配置缺失。 */
 export function getZhongtaiBaseUrl(): string {
-  if (typeof window === 'undefined') return DEFAULT_ZHONGTAI_BASE_URL;
+  if (typeof window === 'undefined') return '';
   const runtime = (window as any)?.L7VP_CONFIG?.zhongtaiBaseUrl;
   if (runtime) return runtime;
-  return DEFAULT_ZHONGTAI_BASE_URL;
+  return '';
 }

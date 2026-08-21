@@ -76,31 +76,6 @@ public class ZhongtaiApiController {
         }
     }
 
-    /**
-     * 查询中台数据（GET 方式，用于数据集浏览等场景）
-     */
-    @GetMapping("/datasource/zhongtai/query")
-    public ResponseEntity<?> queryZhongtaiData(@RequestParam String apiUrl,
-                                                @RequestParam(required = false) Map<String, String> queryParams,
-                                                HttpServletRequest request) {
-        UserSession userSession = AuthController.getSession(request);
-        if (userSession == null || userSession.isExpired()) {
-            Map<String, Object> err1 = new LinkedHashMap<>();
-            err1.put("error", "未登录");
-            return ResponseEntity.status(401).body(err1);
-        }
-
-        try {
-            Map<String, Object> result = zhongtaiApiService.fetchDataGet(apiUrl, queryParams, userSession);
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            log.error("查询中台 API 失败", e);
-            Map<String, Object> err2 = new LinkedHashMap<>();
-            err2.put("error", e.getMessage());
-            return ResponseEntity.status(500).body(err2);
-        }
-    }
-
     // ==================== 中台 API 资源列表 ====================
 
     /**
@@ -119,7 +94,7 @@ public class ZhongtaiApiController {
         }
 
         try {
-            String scopeType = (String) body.getOrDefault("scopeType", "User");
+            String scopeType = (String) body.getOrDefault("scopeType", "Space");
             String spaceId = (String) body.get("spaceId");
 
             log.info("用户 {} 请求中台 API 资源列表 (scopeType={}, spaceId={})",
@@ -189,7 +164,7 @@ public class ZhongtaiApiController {
         }
 
         try {
-            String scopeType = (String) body.getOrDefault("scopeType", "User");
+            String scopeType = (String) body.getOrDefault("scopeType", "Space");
             String spaceId = (String) body.get("spaceId");
             String appId = (String) body.get("appId");
 
@@ -274,7 +249,7 @@ public class ZhongtaiApiController {
         }
 
         try {
-            String scopeType = (String) body.getOrDefault("scopeType", "User");
+            String scopeType = (String) body.getOrDefault("scopeType", "Space");
             String spaceId = (String) body.get("spaceId");
             Integer pageIndex = body.get("pageIndex") instanceof Number
                     ? ((Number) body.get("pageIndex")).intValue() : null;

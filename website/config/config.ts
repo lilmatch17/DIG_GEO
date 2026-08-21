@@ -46,6 +46,11 @@ export default defineConfig({
   ...(OFFLINE_MODE ? {} : getAssetDepExternal()),
   // 离线模式禁用统计脚本
   scripts: OFFLINE_MODE ? [] : AnalyticsScripts,
+  // 运行时配置 window.L7VP_CONFIG：从 public/config.js 加载（部署改该文件即可，无需重新构建）
+  // 必须在应用代码前执行，故放 headScripts；之前 config.js 从未被引用，window.L7VP_CONFIG 一直是 undefined
+  headScripts: [{ src: '/config.js' }],
   // 离线模式使用本地favicon
-  favicons: OFFLINE_MODE ? ['/favicon.ico'] : ['https://mdn.alipayobjects.com/huamei_qa8qxu/afts/img/A*WCVLT5Dp5oYAAAAAAAAAAAAADmJ7AQ/original'],
+  favicons: OFFLINE_MODE
+    ? ['/favicon.ico']
+    : ['https://mdn.alipayobjects.com/huamei_qa8qxu/afts/img/A*WCVLT5Dp5oYAAAAAAAAAAAAADmJ7AQ/original'],
 });

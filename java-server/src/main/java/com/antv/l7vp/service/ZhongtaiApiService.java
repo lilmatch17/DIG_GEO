@@ -97,47 +97,6 @@ public class ZhongtaiApiService {
     }
 
     /**
-     * 调用中台 API（无请求体，GET 方式）
-     * 用于数据集列表浏览等场景
-     */
-    @SuppressWarnings("unchecked")
-    public Map<String, Object> fetchDataGet(String apiUrl, Map<String, String> queryParams,
-                                             UserSession userSession) {
-        if (userSession == null || userSession.getAccessToken() == null) {
-            throw new RuntimeException("用户未登录或 token 不可用");
-        }
-
-        // 拼接查询参数
-        StringBuilder urlBuilder = new StringBuilder(apiUrl);
-        if (queryParams != null && !queryParams.isEmpty()) {
-            urlBuilder.append("?");
-            queryParams.forEach((k, v) -> urlBuilder.append(k).append("=").append(v).append("&"));
-        }
-
-        HttpHeaders headers = buildHeaders(userSession);
-        HttpEntity<Void> entity = new HttpEntity<>(headers);
-
-        log.info("查询中台 API: {} (user={}, orgId={})",
-                urlBuilder, userSession.getUsername(), userSession.getOrgId());
-
-        try {
-            ResponseEntity<String> response = restTemplate.exchange(
-                    urlBuilder.toString(), HttpMethod.GET, entity, String.class);
-            String respBody = response.getBody();
-            log.info("中台 API 返回数据长度: {}", respBody != null ? respBody.length() : 0);
-            return objectMapper.readValue(respBody, Map.class);
-        } catch (HttpClientErrorException e) {
-            if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-                throw new RuntimeException("用户 token 已过期，请刷新后重试");
-            }
-            throw new RuntimeException("中台 API 调用失败: " + e.getMessage(), e);
-        } catch (Exception e) {
-            log.error("中台 API 调用异常", e);
-            throw new RuntimeException("中台 API 调用失败: " + e.getMessage(), e);
-        }
-    }
-
-    /**
      * 构建携带用户上下文的 HTTP Headers（支持动态覆盖 scopeType/spaceId）
      */
     private HttpHeaders buildHeaders(UserSession userSession) {
@@ -209,10 +168,12 @@ public class ZhongtaiApiService {
         pageParam.put("sortType", "desc");
 
         Map<String, Object> requestBody = new LinkedHashMap<>();
-        // 使用传入的 spaceId，没有则用默认
+        // 使用传入的 spaceId，没有则用配置兜底；仍为空则不传 daas_space_id（让中台用当前上下文）
         String effectiveSpaceId = (spaceId != null && !spaceId.isEmpty())
                 ? spaceId : config.getApiSpaceId();
-        requestBody.put("daas_space_id", effectiveSpaceId);
+        if (effectiveSpaceId != null && !effectiveSpaceId.isEmpty()) {
+            requestBody.put("daas_space_id", effectiveSpaceId);
+        }
         requestBody.put("pageParam", pageParam);
         requestBody.put("listType", "owner");
         requestBody.put("status", Arrays.asList("materialization"));
@@ -257,10 +218,13 @@ public class ZhongtaiApiService {
     // ==================== 库列表（应用下的库/实例） ====================
 
     /**
-     * 获取中台应用下的「库列表」（Doris 多库 / 其它引擎库）
-     * POST daasECS/unit/instance/list 传 appId
+     * 获取中台「库列表」（Doris 多库 / 其它引擎库）
+     * POST daasECS/unit/instance/list
      *
-     * @param appId       应用ID（为空时用配置 zhongtai.api.app-id）
+     * 注意：appId 会限制只查某个实例/应用下的库，默认不传（中台返回全部有权限的库/实例）。
+     * 仅当调用方显式传入 appId 时才按实例过滤。
+     *
+     * @param appId       应用ID（可选，为 null 则不传）
      * @param scopeType   User / Space
      * @param spaceId     空间ID
      * @param userSession 用户 Session
@@ -272,10 +236,7 @@ public class ZhongtaiApiService {
         String url = config.getUnitInstanceUrl();
 
         String effectiveAppId = (appId != null && !appId.trim().isEmpty())
-                ? appId.trim() : config.getAppId();
-        if (effectiveAppId == null || effectiveAppId.isEmpty()) {
-            throw new RuntimeException("未配置中台应用ID (zhongtai.api.app-id)");
-        }
+                ? appId.trim() : null;
 
         Map<String, Object> pageParam = new LinkedHashMap<>();
         pageParam.put("pageIndex", 1);
@@ -284,7 +245,10 @@ public class ZhongtaiApiService {
         pageParam.put("sortType", "desc");
 
         Map<String, Object> requestBody = new LinkedHashMap<>();
-        requestBody.put("appId", effectiveAppId);
+        // appId 会限制只查某个实例下的库，默认不传；仅当调用方显式传入时才按实例过滤
+        if (effectiveAppId != null) {
+            requestBody.put("appId", effectiveAppId);
+        }
         requestBody.put("accountId", null);
         requestBody.put("pageParam", pageParam);
         requestBody.put("instanceType", "");
@@ -382,7 +346,9 @@ public class ZhongtaiApiService {
         Map<String, Object> requestBody = new LinkedHashMap<>();
         String effectiveSpaceId = (spaceId != null && !spaceId.isEmpty())
                 ? spaceId : config.getApiSpaceId();
-        requestBody.put("daas_space_id", effectiveSpaceId);
+        if (effectiveSpaceId != null && !effectiveSpaceId.isEmpty()) {
+            requestBody.put("daas_space_id", effectiveSpaceId);
+        }
         requestBody.put("pageParam", pageParam);
         requestBody.put("listType", "owner");
         requestBody.put("extMap", extMap);
@@ -463,7 +429,7 @@ public class ZhongtaiApiService {
         conn.setConnId("zhongtai_" + instance.get("instanceId"));
         conn.setConnName("中台-" + displayName);
         conn.setDbType(dbType);
-        conn.setHost(metrics.getOrDefault("host", "10.16.1.6"));
+        conn.setHost(metrics.getOrDefault("host", "")); // 遗留路径：真实 host 应来自 connect/info，不再兜底到硬编码 IP
         String portStr = metrics.getOrDefault("port",
                 "Dameng".equalsIgnoreCase(dbType) ? "5236" : "9030");
         conn.setPort(Integer.parseInt(portStr));

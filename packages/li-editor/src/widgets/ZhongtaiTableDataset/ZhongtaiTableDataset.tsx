@@ -162,12 +162,24 @@ export default function ZhongtaiTableDataset(props: Props) {
     setRowCount(0);
   }, []);
 
-  const handleResourceSelect = useCallback((resource: ResourceItem | null) => {
-    setSelectedResource(resource);
-    setPreviewData(null);
-    setPreviewColumns([]);
-    setRowCount(0);
-  }, []);
+  const handleResourceSelect = useCallback(
+    (resource: ResourceItem | null) => {
+      setSelectedResource(resource);
+      setPreviewData(null);
+      setPreviewColumns([]);
+      setRowCount(0);
+      // 选中表时若数据集名称为空则自动带出表名（可改），否则添加按钮因名称空一直 disabled
+      // 与中台API数据集组件(ZhongtaiApiDataset)行为保持一致；不覆盖用户已手动输入的名称
+      if (resource) {
+        const currentName = form.getFieldValue('name');
+        if (!currentName) {
+          form.setFieldsValue({ name: resource.resourceName });
+          setDatasetName(resource.resourceName);
+        }
+      }
+    },
+    [form],
+  );
 
   const handlePreview = useCallback(async () => {
     if (!selectedResource) {
