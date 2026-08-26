@@ -58,5 +58,10 @@ public class WebConfig implements WebMvcConfigurer {
         // 图标静态资源（png/svg 等），支持子目录分类
         registry.addResourceHandler(iconsUrlPrefix + "/**")
                 .addResourceLocations("file:" + new File(iconsPath).getAbsolutePath() + File.separator);
+
+        // 前端 SPA 静态资源（单 jar：前端 dist 内嵌于 classpath:/static/）
+        // 经中台 nginx 剥掉 /l7vp 前缀后走默认 "/" 静态；此处支持直连 3001 以 /l7vp/ 访问
+        registry.addResourceHandler("/l7vp/**")
+                .addResourceLocations("classpath:/static/");
     }
 }

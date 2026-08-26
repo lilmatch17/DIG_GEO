@@ -1,5 +1,6 @@
 package com.antv.l7vp.controller;
 
+import com.antv.l7vp.config.ZhongtaiConfig;
 import com.antv.l7vp.dto.UserSession;
 import com.antv.l7vp.service.AuthService;
 import org.slf4j.Logger;
@@ -34,6 +35,9 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private ZhongtaiConfig zhongtaiConfig;
 
     /**
      * 获取 SSO 登录跳转 URL
@@ -116,15 +120,15 @@ public class AuthController {
             log.info("用户 {} ({}) 登录成功，session={}",
                     userSession.getUsername(), userSession.getDisplayName(), session.getId());
 
-            // 4. 重定向到前端首页
-            String frontendUrl = "http://localhost:8000?login_success=1"
+            // 4. 重定向到前端首页（前端地址来自 zhongtai.sso.frontend-url，部署时用 APP_FRONTEND_URL 覆盖）
+            String frontendUrl = zhongtaiConfig.getFrontendUrl() + "?login_success=1"
                     + "&username=" + URLEncoder.encode(userSession.getUsername() != null ? userSession.getUsername() : "", StandardCharsets.UTF_8.name())
                     + "&name=" + URLEncoder.encode(userSession.getDisplayName() != null ? userSession.getDisplayName() : "", StandardCharsets.UTF_8.name());
             response.sendRedirect(frontendUrl);
         } catch (Exception e) {
             log.error("OAuth2 回调处理失败", e);
             // 重定向到前端并带上错误信息
-            response.sendRedirect("http://localhost:8000?login_error=1&message="
+            response.sendRedirect(zhongtaiConfig.getFrontendUrl() + "?login_error=1&message="
                     + URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8.name()));
         }
     }

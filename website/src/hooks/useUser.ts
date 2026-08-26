@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
 import { checkAuthStatus, getLoginUrl, type AuthStatus } from '@/services/auth';
+import { useCallback, useEffect, useState } from 'react';
 
 export type LoginMode = 'sso' | 'direct' | 'checking';
 
@@ -68,6 +68,13 @@ export function useUser() {
   }, []);
 
   useEffect(() => {
+    // 分享/嵌入页（/share/:id）免登录：不校验登录态、不跳 SSO，直接渲染地图
+    const route = window.location.hash.replace(/^#/, '') || window.location.pathname;
+    if (route.startsWith('/share')) {
+      setLoading(false);
+      return;
+    }
+
     // 处理回调参数 (hash 路由: login_success 在 ? 之后、# 之前)
     const search = window.location.search;
     const params = new URLSearchParams(search);

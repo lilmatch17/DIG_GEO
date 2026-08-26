@@ -33,6 +33,22 @@ lerna-debug.log
 
 master/
 java-server/target/
-deploy/
 node_modules/
 *.iml
+
+# ===== deploy 部署包：只跟踪配置模板，构建产物/运行时数据/工具脚本不入库 =====
+deploy/*
+!deploy/README.md
+!deploy/docker-compose.yml
+!deploy/definition.sql
+!deploy/zhongtai-nginx-l7vp.conf
+!deploy/backend/
+deploy/backend/app.jar
+!deploy/config/
+deploy/.tools/
+deploy/data/
+deploy/frontend/
+deploy/l7vp-single-arm64.tar.gz
+
+# 前端 dist 拷入后端后的用户上传图标数据（生产经 /opt/l7vp/icons 卷挂载提供，不入库）
+java-server/src/main/resources/static/icons/
