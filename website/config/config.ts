@@ -8,6 +8,8 @@ const OFFLINE_MODE = true;
 
 export default defineConfig({
   title: '地理可视化',
+  // 部署于中台 nginx /l7vp 子路径（单 jar，前端静态内嵌后端）
+  publicPath: '/l7vp/',
   metas: [
     {
       name: 'keywords',

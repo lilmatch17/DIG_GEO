@@ -1,0 +1,36 @@
+# L7VP 单容器部署：前后端已打成 1 个 jar（前端静态内嵌于 classpath:/static/），
+# 不再需要独立的前端 nginx 容器。中台 nginx 统一 8081 入口，
+# 把 /l7vp /api /data /thumbnails /icons 转发到本服务的 3001 端口。
+# ARM64 / x86_64 通用（基础镜像 arm64v8/eclipse-temurin:8-jre）
+# 使用：docker compose up -d
+services:
+  l7vp:
+    build: ./backend
+    image: l7vp-single:latest
+    container_name: l7vp
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      # 中台 / SSO（★ 按实际环境改）
+      ZHONGTAI_BASE_URL: "http://10.16.1.6:8081"
+      # ★ 改成中台对外访问地址 + /l7vp 子路径（SSO 回调地址 + 登录后跳转地址）
+      APP_FRONTEND_URL: "http://<服务器对外IP>:8081/l7vp"
+      # ZHONGTAI_CLIENT_ID: ""
+      # ZHONGTAI_CLIENT_SECRET: ""
+      # 中台空间 ID 兜底值（与 application.properties 默认一致）。
+      # 优先级：中台菜单链接 URL 携带的 space_id（前端读取传给后端）> 此环境变量 > jar 内默认值。
+      # ★ 若中台菜单链接不自动拼 space_id，改这里即可，无需改代码/重打 jar。
+      ZHONGTAI_SPACE_ID: "79503c5c0eca4d159d051fc51a86cbed"
+    volumes:
+      # 生产配置覆盖 jar 内配置（Spring Boot 自动读取容器内 /opt/l7vp/config/）
+      - ./backend/application.properties:/opt/l7vp/config/application.properties:ro
+      # 运行时配置 config.js 外置覆盖（改此文件即生效，无需重新打 jar）
+      - ./config/config.js:/opt/l7vp/config/config.js:ro
+      # 持久化：用户上传的图标 / 缩略图
+      - ./data/icons:/opt/l7vp/icons
+      - ./data/thumbnails:/opt/l7vp/thumbnails
+
+networks:
+  default:
+    driver: bridge
